@@ -1,5 +1,8 @@
 ﻿<h2>Organization Portal</h2>
 
-<p>
-    You are logged into the organization portal.
-</p>
+<p>You are logged into the organization portal.</p>
+
+<form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+    @Html.AntiForgeryToken()
+    <button type="submit">Logout</button>
+</form>

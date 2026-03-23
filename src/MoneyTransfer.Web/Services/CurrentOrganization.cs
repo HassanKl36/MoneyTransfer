@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using MoneyTransfer.Application.Common.Interfaces;
 
 namespace MoneyTransfer.Web.Services;
 

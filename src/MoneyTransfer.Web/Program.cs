@@ -4,6 +4,9 @@ using MoneyTransfer.Infrastructure.Data;
 using MoneyTransfer.Infrastructure.Identity;
 using MoneyTransfer.Web.Infrastructure;
 using MoneyTransfer.Web.Services;
+using MoneyTransfer.Application.Common.Interfaces;
+using MoneyTransfer.Application.Services.Authentication;
+using MoneyTransfer.Infrastructure.Services.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +52,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentOrganization, CurrentOrganization>();
 builder.Services.AddScoped<ICurrentClient, CurrentClient>();
 
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 var app = builder.Build();
 

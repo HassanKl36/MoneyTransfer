@@ -1,6 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <Content Remove="Areas\Org\Views\Clients\Create.cshtml" />
+    <Content Remove="Areas\Org\Views\Clients\Edit.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Areas\Org\Views\Clients\Create.cshtml" />
+    <None Include="Areas\Org\Views\Clients\Edit.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MoneyTransfer.Application\MoneyTransfer.Application.csproj" />
     <ProjectReference Include="..\MoneyTransfer.Infrastructure\MoneyTransfer.Infrastructure.csproj" />
   </ItemGroup>

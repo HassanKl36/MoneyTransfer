@@ -1,4 +1,4 @@
-﻿namespace MoneyTransfer.Web.Services;
+﻿namespace MoneyTransfer.Application.Common.Interfaces;
 
 public interface ICurrentOrganization
 {

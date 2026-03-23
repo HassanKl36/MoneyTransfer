@@ -1,0 +1,50 @@
+﻿@model MoneyTransfer.Web.Models.Account.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<h2>Register Organization</h2>
+
+<form asp-action="Register" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div>
+        <label asp-for="OrganizationName"></label>
+        <input asp-for="OrganizationName" />
+        <span asp-validation-for="OrganizationName" class="text-danger"></span>
+    </div>
+
+    <div>
+        <label asp-for="FullName"></label>
+        <input asp-for="FullName" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+
+    <div>
+        <label asp-for="Email"></label>
+        <input asp-for="Email" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div>
+        <label asp-for="Password"></label>
+        <input asp-for="Password" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+
+    <div>
+        <label asp-for="ConfirmPassword"></label>
+        <input asp-for="ConfirmPassword" />
+        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+    </div>
+
+    <div style="margin-top:15px;">
+        <button type="submit">Register</button>
+    </div>
+</form>
+
+<p>
+    Already have an account?
+    <a asp-action="Login">Login</a>
+</p>
