@@ -1,0 +1,64 @@
+﻿@model IReadOnlyList<MoneyTransfer.Application.Services.Clients.ClientListItemDto>
+
+@{
+    ViewData["Title"] = "Clients";
+}
+
+<h1>Clients</h1>
+
+<p>
+    <a asp-area="Org" asp-controller="Clients" asp-action="Create" class="btn btn-primary">
+        Create Client
+    </a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Archived</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var client in Model)
+            {
+                <tr>
+                    <td>@client.Name</td>
+                    <td>@(client.IsArchived ? "Yes" : "No")</td>
+                    <td class="text-nowrap">
+                        <a asp-area="Org"
+                           asp-controller="Clients"
+                           asp-action="Edit"
+                           asp-route-id="@client.Id"
+                           class="btn btn-sm btn-warning">
+                            Edit
+                        </a>
+
+                        <form asp-area="Org"
+                              asp-controller="Clients"
+                              asp-action="Archive"
+                              asp-route-id="@client.Id"
+                              method="post"
+                              class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Are you sure you want to archive this client?');">
+                                Archive
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="3">No clients found.</td>
+            </tr>
+        }
+    </tbody>
+</table>
