@@ -11,6 +11,10 @@ public sealed class Client
 
     public bool IsArchived { get; set; }
 
+    public string PhoneNumber { get; set; } = null!;
+
+    public string? Email { get; set; }
+
     public ICollection<Project> Projects { get; set; } = new List<Project>();
     public ICollection<LedgerEntry> LedgerEntries { get; set; } = new List<LedgerEntry>();
 }

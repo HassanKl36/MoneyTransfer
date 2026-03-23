@@ -16,6 +16,13 @@ public sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
             .IsRequired()
             .HasMaxLength(200);
 
+        builder.Property(c => c.PhoneNumber)
+            .IsRequired()
+            .HasMaxLength(20);
+
+        builder.Property(c => c.Email)
+            .HasMaxLength(256);
+
         builder.Property(x => x.IsArchived)
             .HasDefaultValue(false);
 

@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Clients";
+    var search = ViewBag.Search as string;
 }
 
 <h1>Clients</h1>
@@ -12,21 +13,40 @@
     </a>
 </p>
 
+<form asp-area="Org" asp-controller="Clients" asp-action="Index" method="get">
+    <div class="mb-3">
+        <label for="search">Search</label>
+        <input id="search" name="search" value="@search" class="form-control" />
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a asp-area="Org" asp-controller="Clients" asp-action="Index" class="btn btn-secondary">Clear</a>
+    </div>
+</form>
+
 <table class="table table-striped">
     <thead>
         <tr>
             <th>Name</th>
+            <th>Phone Number</th>
+            <th>Email</th>
             <th>Archived</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-        @if (Model != null && Model.Any())
+        @if (Model.Count == 0)
+        {
+            <tr>
+                <td colspan="5">No clients found.</td>
+            </tr>
+        }
+        else
         {
             foreach (var client in Model)
             {
                 <tr>
                     <td>@client.Name</td>
+                    <td>@client.PhoneNumber</td>
+                    <td>@client.Email</td>
                     <td>@(client.IsArchived ? "Yes" : "No")</td>
                     <td class="text-nowrap">
                         <a asp-area="Org"
@@ -53,12 +73,6 @@
                     </td>
                 </tr>
             }
-        }
-        else
-        {
-            <tr>
-                <td colspan="3">No clients found.</td>
-            </tr>
         }
     </tbody>
 </table>

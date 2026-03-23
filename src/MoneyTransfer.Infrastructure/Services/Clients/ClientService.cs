@@ -19,6 +19,7 @@ public sealed class ClientService : IClientService
     }
 
     public async Task<IReadOnlyList<ClientListItemDto>> GetClientsAsync(
+        string? search = null,
         bool includeArchived = false,
         CancellationToken cancellationToken = default)
     {
@@ -27,6 +28,16 @@ public sealed class ClientService : IClientService
         var query = _dbContext.Clients
             .AsNoTracking()
             .Where(c => c.OrganizationId == organizationId);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+
+            query = query.Where(c =>
+                c.Name.Contains(term) ||
+                c.PhoneNumber.Contains(term) ||
+                (c.Email != null && c.Email.Contains(term)));
+        }
 
         if (!includeArchived)
         {
@@ -39,6 +50,8 @@ public sealed class ClientService : IClientService
             {
                 Id = c.Id,
                 Name = c.Name,
+                PhoneNumber = c.PhoneNumber,
+                Email = c.Email,
                 IsArchived = c.IsArchived
             })
             .ToListAsync(cancellationToken);
@@ -57,6 +70,8 @@ public sealed class ClientService : IClientService
             {
                 Id = c.Id,
                 Name = c.Name,
+                PhoneNumber = c.PhoneNumber,
+                Email = c.Email,
                 IsArchived = c.IsArchived
             })
             .FirstOrDefaultAsync(cancellationToken);
@@ -73,6 +88,8 @@ public sealed class ClientService : IClientService
             Id = Guid.NewGuid(),
             OrganizationId = organizationId,
             Name = model.Name.Trim(),
+            PhoneNumber = model.PhoneNumber.Trim(),
+            Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim(),
             IsArchived = false
         };
 
@@ -97,6 +114,8 @@ public sealed class ClientService : IClientService
         }
 
         client.Name = model.Name.Trim();
+        client.PhoneNumber = model.PhoneNumber.Trim();
+        client.Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim();
         client.IsArchived = model.IsArchived;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
