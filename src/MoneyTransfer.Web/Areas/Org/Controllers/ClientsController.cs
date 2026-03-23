@@ -16,9 +16,13 @@ public class ClientsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(string? search, CancellationToken cancellationToken)
     {
-        var clients = await _clientService.GetClientsAsync(cancellationToken: cancellationToken);
+        var clients = await _clientService.GetClientsAsync(
+            search: search,
+            cancellationToken: cancellationToken);
+
+        ViewBag.Search = search;
         return View(clients);
     }
 
