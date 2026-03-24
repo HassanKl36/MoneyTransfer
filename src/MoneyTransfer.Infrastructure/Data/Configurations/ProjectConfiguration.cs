@@ -16,6 +16,12 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
             .IsRequired()
             .HasMaxLength(200);
 
+        builder.Property(x => x.Code)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.Description)
+            .HasMaxLength(1000);
+
         builder.Property(x => x.IsArchived)
             .HasDefaultValue(false);
 

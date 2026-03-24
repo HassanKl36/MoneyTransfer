@@ -1,0 +1,67 @@
+﻿@model IReadOnlyList<MoneyTransfer.Application.Services.Projects.ProjectListItemDto>
+
+@{
+    ViewData["Title"] = "Projects";
+    var search = ViewBag.Search as string;
+}
+
+<h1>Projects</h1>
+
+<p>
+    <a asp-area="Org" asp-controller="Projects" asp-action="Create" class="btn btn-primary">Create Project</a>
+</p>
+
+<form method="get" class="mb-3">
+    <div class="row g-2">
+        <div class="col-md-6">
+            <input name="search" value="@search" class="form-control" placeholder="Search projects..." />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-outline-secondary">Search</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Client</th>
+            <th>Code</th>
+            <th>Description</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var project in Model)
+        {
+            <tr>
+                <td>@project.Name</td>
+                <td>@project.ClientName</td>
+                <td>@project.Code</td>
+                <td>@project.Description</td>
+                <td class="text-end">
+                    <a asp-area="Org"
+                       asp-controller="Projects"
+                       asp-action="Edit"
+                       asp-route-id="@project.Id"
+                       class="btn btn-sm btn-outline-primary">
+                        Edit
+                    </a>
+
+                    <form asp-area="Org"
+                          asp-controller="Projects"
+                          asp-action="Archive"
+                          asp-route-id="@project.Id"
+                          method="post"
+                          class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            Archive
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

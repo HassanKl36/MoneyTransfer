@@ -1,0 +1,50 @@
+﻿@model MoneyTransfer.Web.Areas.Org.Models.Projects.ProjectFormViewModel
+
+@{
+    ViewData["Title"] = "Edit Project";
+}
+
+<h1>Edit Project</h1>
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <input asp-for="Project.Id" type="hidden" />
+
+    <div class="mb-3">
+        <label asp-for="Project.ClientId" class="form-label"></label>
+        <select asp-for="Project.ClientId" asp-items="Model.Clients" class="form-select">
+            <option value="">-- Select client --</option>
+        </select>
+        <span asp-validation-for="Project.ClientId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Project.Name" class="form-label"></label>
+        <input asp-for="Project.Name" class="form-control" />
+        <span asp-validation-for="Project.Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Project.Code" class="form-label"></label>
+        <input asp-for="Project.Code" class="form-control" />
+        <span asp-validation-for="Project.Code" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Project.Description" class="form-label"></label>
+        <textarea asp-for="Project.Description" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Project.Description" class="text-danger"></span>
+    </div>
+
+    <div class="form-check mb-3">
+        <input asp-for="Project.IsArchived" class="form-check-input" />
+        <label asp-for="Project.IsArchived" class="form-check-label"></label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-area="Org" asp-controller="Projects" asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
