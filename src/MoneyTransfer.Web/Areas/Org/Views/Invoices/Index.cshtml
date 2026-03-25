@@ -1,0 +1,47 @@
+﻿@model IReadOnlyList<MoneyTransfer.Application.Services.Invoices.InvoiceListItemDto>
+
+@{
+    ViewData["Title"] = "Invoices";
+    var projectId = (Guid)ViewBag.ProjectId;
+}
+
+<h1>Invoices</h1>
+
+<p>
+    <a asp-area="Org"
+       asp-controller="Invoices"
+       asp-action="Create"
+       asp-route-projectId="@projectId"
+       class="btn btn-primary">
+        Create Invoice
+    </a>
+</p>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        No invoices found for this project.
+    </div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Amount</th>
+                <th>Description</th>
+                <th>Created At</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var invoice in Model)
+            {
+                <tr>
+                    <td>@invoice.Amount</td>
+                    <td>@invoice.Description</td>
+                    <td>@invoice.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

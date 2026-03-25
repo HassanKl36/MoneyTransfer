@@ -49,6 +49,14 @@
                         Edit
                     </a>
 
+                    <a asp-area="Org"
+                       asp-controller="Invoices"
+                       asp-action="Index"
+                       asp-route-projectId="@project.Id"
+                       class="btn btn-sm btn-outline-secondary">
+                        Invoices
+                    </a>
+
                     <form asp-area="Org"
                           asp-controller="Projects"
                           asp-action="Archive"
