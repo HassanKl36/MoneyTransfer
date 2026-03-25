@@ -1,16 +1,16 @@
-﻿namespace MoneyTransfer.Application.Services.Invoices;
+﻿namespace MoneyTransfer.Application.Services.Payments;
 
-public interface IInvoiceService
+public interface IPaymentService
 {
-    Task<IReadOnlyList<InvoiceListItemDto>> GetByProjectAsync(
+    Task<IReadOnlyList<PaymentListItemDto>> GetByProjectAsync(
         Guid projectId,
         CancellationToken cancellationToken = default);
 
-    Task<InvoiceCreateDto> InitializeCreateAsync(
+    Task<PaymentCreateDto> InitializeCreateAsync(
         Guid projectId,
         CancellationToken cancellationToken = default);
 
     Task CreateAsync(
-        InvoiceCreateDto dto, 
+        PaymentCreateDto dto,
         CancellationToken cancellationToken = default);
 }
