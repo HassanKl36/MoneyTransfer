@@ -2,6 +2,16 @@
 
 <p>You are logged into the organization portal.</p>
 
+<div style="margin-top:20px;">
+    <a asp-area="Org" asp-controller="Clients" asp-action="Index" class="btn btn-primary">
+        Clients
+    </a>
+
+    <a asp-area="Org" asp-controller="Projects" asp-action="Index" class="btn btn-primary" style="margin-left:10px;">
+        Projects
+    </a>
+</div>
+
 <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
     @Html.AntiForgeryToken()
     <button type="submit">Logout</button>
