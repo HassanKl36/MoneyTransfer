@@ -10,7 +10,7 @@ public sealed class Organization
     /// Short code for invoice numbering later.
     /// </summary>
     public string Code { get; set; } = string.Empty;
-
+    public OrganizationSequence? Sequence { get; set; }
     public ICollection<Client> Clients { get; set; } = new List<Client>();
     public ICollection<Project> Projects { get; set; } = new List<Project>();
     public ICollection<LedgerEntry> LedgerEntries { get; set; } = new List<LedgerEntry>();

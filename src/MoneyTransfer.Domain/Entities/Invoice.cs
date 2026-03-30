@@ -10,6 +10,8 @@ public sealed class Invoice
     public Guid OrganizationId { get; set; }
     public Organization? Organization { get; set; }
 
+    public string InvoiceNumber { get; set; } = string.Empty;
+
     public decimal Amount { get; set; }
 
     public string? Description { get; set; }

@@ -28,6 +28,7 @@ else
     <table class="table table-striped">
         <thead>
             <tr>
+                <th>Payment Reference</th>
                 <th>Amount</th>
                 <th>Description</th>
                 <th>Created At</th>
@@ -37,6 +38,7 @@ else
             @foreach (var payment in Model)
             {
                 <tr>
+                    <td>@payment.PaymentReference</td>
                     <td>@payment.Amount</td>
                     <td>@payment.Description</td>
                     <td>@payment.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>

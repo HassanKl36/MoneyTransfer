@@ -4,15 +4,16 @@ using MoneyTransfer.Application.Common.Interfaces;
 using MoneyTransfer.Application.Services.Authentication;
 using MoneyTransfer.Application.Services.Clients;
 using MoneyTransfer.Application.Services.Invoices;
-using MoneyTransfer.Application.Services.Projects;
 using MoneyTransfer.Application.Services.Payments;
+using MoneyTransfer.Application.Services.Projects;
 using MoneyTransfer.Infrastructure.Data;
 using MoneyTransfer.Infrastructure.Identity;
 using MoneyTransfer.Infrastructure.Services.Authentication;
 using MoneyTransfer.Infrastructure.Services.Clients;
+using MoneyTransfer.Infrastructure.Services.FinancialIdentity;
 using MoneyTransfer.Infrastructure.Services.Invoices;
-using MoneyTransfer.Infrastructure.Services.Projects;
 using MoneyTransfer.Infrastructure.Services.Payments;
+using MoneyTransfer.Infrastructure.Services.Projects;
 using MoneyTransfer.Web.Infrastructure;
 using MoneyTransfer.Web.Services;
 
@@ -63,6 +64,7 @@ builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IFinancialIdentityGenerator, FinancialIdentityGenerator>();
 
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 

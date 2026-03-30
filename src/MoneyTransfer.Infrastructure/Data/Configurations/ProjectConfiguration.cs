@@ -17,7 +17,8 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
             .HasMaxLength(200);
 
         builder.Property(x => x.Code)
-            .HasMaxLength(100);
+            .IsRequired()
+            .HasMaxLength(20);
 
         builder.Property(x => x.Description)
             .HasMaxLength(1000);
@@ -27,6 +28,8 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
 
         builder.HasIndex(x => x.OrganizationId);
         builder.HasIndex(x => x.ClientId);
+        builder.HasIndex(x => new { x.OrganizationId, x.Code })
+            .IsUnique();
 
         builder.HasMany(x => x.LedgerEntries)
             .WithOne(x => x.Project)

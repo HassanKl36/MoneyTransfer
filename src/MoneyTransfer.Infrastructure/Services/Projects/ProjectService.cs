@@ -9,13 +9,16 @@ public sealed class ProjectService : IProjectService
 {
     private readonly MoneyTransferDbContext _dbContext;
     private readonly ICurrentOrganization _currentOrganization;
+    private readonly IFinancialIdentityGenerator _financialIdentityGenerator;
 
     public ProjectService(
         MoneyTransferDbContext dbContext,
-        ICurrentOrganization currentOrganization)
+        ICurrentOrganization currentOrganization,
+        IFinancialIdentityGenerator financialIdentityGenerator)
     {
         _dbContext = dbContext;
         _currentOrganization = currentOrganization;
+        _financialIdentityGenerator = financialIdentityGenerator;
     }
 
     public async Task<IReadOnlyList<ProjectListItemDto>> GetProjectsAsync(
@@ -35,7 +38,7 @@ public sealed class ProjectService : IProjectService
 
             query = query.Where(p =>
                 p.Name.Contains(term) ||
-                (p.Code != null && p.Code.Contains(term)) ||
+                p.Code.Contains(term) ||
                 (p.Description != null && p.Description.Contains(term)));
         }
 
@@ -86,7 +89,6 @@ public sealed class ProjectService : IProjectService
     {
         var organizationId = GetRequiredOrganizationId();
 
-        //CRITICAL: validate client belongs to organization
         var clientExists = await _dbContext.Clients
             .AnyAsync(c =>
                 c.OrganizationId == organizationId &&
@@ -98,13 +100,17 @@ public sealed class ProjectService : IProjectService
             throw new InvalidOperationException("Invalid client selection.");
         }
 
+        var code = await _financialIdentityGenerator.GenerateProjectCodeAsync(
+            organizationId,
+            cancellationToken);
+
         var project = new Domain.Entities.Project
         {
             Id = Guid.NewGuid(),
             OrganizationId = organizationId,
             ClientId = model.ClientId,
             Name = model.Name.Trim(),
-            Code = string.IsNullOrWhiteSpace(model.Code) ? null : model.Code.Trim(),
+            Code = code,
             Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim(),
             IsArchived = false
         };
@@ -129,7 +135,6 @@ public sealed class ProjectService : IProjectService
             return false;
         }
 
-        //validate client ownership again
         var clientExists = await _dbContext.Clients
             .AnyAsync(c =>
                 c.OrganizationId == organizationId &&
@@ -143,7 +148,6 @@ public sealed class ProjectService : IProjectService
 
         project.ClientId = model.ClientId;
         project.Name = model.Name.Trim();
-        project.Code = string.IsNullOrWhiteSpace(model.Code) ? null : model.Code.Trim();
         project.Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim();
         project.IsArchived = model.IsArchived;
 

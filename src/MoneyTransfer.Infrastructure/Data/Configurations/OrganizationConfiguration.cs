@@ -20,6 +20,11 @@ public sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organiz
             .IsRequired()
             .HasMaxLength(20);
 
+        builder.HasOne(x => x.Sequence)
+            .WithOne(x => x.Organization)
+            .HasForeignKey<OrganizationSequence>(x => x.OrganizationId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(x => x.Clients)
             .WithOne(x => x.Organization)
             .HasForeignKey(x => x.OrganizationId)

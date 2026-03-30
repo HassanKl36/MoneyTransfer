@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using MoneyTransfer.Domain.Entities;
 
-namespace MoneyTransfer.Infrastructure.Persistence.Configurations;
+namespace MoneyTransfer.Infrastructure.Data.Configurations;
 
 public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 {
@@ -16,6 +16,10 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .IsRequired()
             .HasColumnType("decimal(18,2)");
 
+        builder.Property(p => p.PaymentReference)
+            .IsRequired()
+            .HasMaxLength(20);
+
         builder.Property(p => p.Description)
             .HasMaxLength(500);
 
@@ -28,13 +32,14 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.ProjectId)
             .IsRequired();
 
-        // Relationship: Payment → Project
+        builder.HasIndex(p => new { p.OrganizationId, p.PaymentReference })
+            .IsUnique();
+
         builder.HasOne(p => p.Project)
-            .WithMany() // no navigation on Project (keep consistent with current model)
+            .WithMany()
             .HasForeignKey(p => p.ProjectId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Optional: Payment → Organization (no navigation collection needed)
         builder.HasOne(p => p.Organization)
             .WithMany()
             .HasForeignKey(p => p.OrganizationId)

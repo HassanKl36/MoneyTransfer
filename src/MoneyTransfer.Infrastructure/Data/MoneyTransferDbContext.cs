@@ -13,10 +13,12 @@ public sealed class MoneyTransferDbContext : IdentityDbContext<ApplicationUser>
     }
 
     public DbSet<Organization> Organizations => Set<Organization>();
+    public DbSet<OrganizationSequence> OrganizationSequences => Set<OrganizationSequence>();
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<LedgerEntry> LedgerEntries => Set<LedgerEntry>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<Payment> Payments => Set<Payment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

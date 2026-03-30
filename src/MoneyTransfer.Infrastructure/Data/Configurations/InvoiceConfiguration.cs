@@ -18,6 +18,10 @@ public sealed class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.Property(x => x.OrganizationId)
             .IsRequired();
 
+        builder.Property(x => x.InvoiceNumber)
+            .IsRequired()
+            .HasMaxLength(20);
+
         builder.Property(x => x.Amount)
             .HasColumnType("decimal(18,2)")
             .IsRequired();
@@ -27,6 +31,9 @@ public sealed class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
 
         builder.Property(x => x.CreatedAt)
             .IsRequired();
+
+        builder.HasIndex(x => new { x.OrganizationId, x.InvoiceNumber })
+            .IsUnique();
 
         builder.HasOne(x => x.Project)
             .WithMany()

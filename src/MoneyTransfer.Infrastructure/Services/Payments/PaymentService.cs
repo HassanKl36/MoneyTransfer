@@ -10,13 +10,16 @@ public sealed class PaymentService : IPaymentService
 {
     private readonly MoneyTransferDbContext _dbContext;
     private readonly ICurrentOrganization _currentOrganization;
+    private readonly IFinancialIdentityGenerator _financialIdentityGenerator;
 
     public PaymentService(
         MoneyTransferDbContext dbContext,
-        ICurrentOrganization currentOrganization)
+        ICurrentOrganization currentOrganization,
+        IFinancialIdentityGenerator financialIdentityGenerator)
     {
         _dbContext = dbContext;
         _currentOrganization = currentOrganization;
+        _financialIdentityGenerator = financialIdentityGenerator;
     }
 
     public async Task<IReadOnlyList<PaymentListItemDto>> GetByProjectAsync(
@@ -43,6 +46,7 @@ public sealed class PaymentService : IPaymentService
             .Select(p => new PaymentListItemDto
             {
                 Id = p.Id,
+                PaymentReference = p.PaymentReference,
                 Amount = p.Amount,
                 Description = p.Description,
                 CreatedAt = p.CreatedAt
@@ -94,11 +98,16 @@ public sealed class PaymentService : IPaymentService
             throw new InvalidOperationException("Archived projects cannot receive payments.");
         }
 
+        var paymentReference = await _financialIdentityGenerator.GeneratePaymentReferenceAsync(
+            organizationId,
+            cancellationToken);
+
         var payment = new Payment
         {
             Id = Guid.NewGuid(),
             ProjectId = project.Id,
             OrganizationId = organizationId,
+            PaymentReference = paymentReference,
             Amount = dto.Amount,
             Description = string.IsNullOrWhiteSpace(dto.Description)
                 ? null

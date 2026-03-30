@@ -10,13 +10,16 @@ public sealed class InvoiceService : IInvoiceService
 {
     private readonly MoneyTransferDbContext _dbContext;
     private readonly ICurrentOrganization _currentOrganization;
+    private readonly IFinancialIdentityGenerator _financialIdentityGenerator;
 
     public InvoiceService(
         MoneyTransferDbContext dbContext,
-        ICurrentOrganization currentOrganization)
+        ICurrentOrganization currentOrganization,
+        IFinancialIdentityGenerator financialIdentityGenerator)
     {
         _dbContext = dbContext;
         _currentOrganization = currentOrganization;
+        _financialIdentityGenerator = financialIdentityGenerator;
     }
 
     public async Task<IReadOnlyList<InvoiceListItemDto>> GetByProjectAsync(
@@ -45,6 +48,7 @@ public sealed class InvoiceService : IInvoiceService
             {
                 Id = x.Id,
                 ProjectId = x.ProjectId,
+                InvoiceNumber = x.InvoiceNumber,
                 Amount = x.Amount,
                 Description = x.Description,
                 CreatedAt = x.CreatedAt
@@ -96,13 +100,20 @@ public sealed class InvoiceService : IInvoiceService
             throw new InvalidOperationException("Project was not found.");
         }
 
+        var invoiceNumber = await _financialIdentityGenerator.GenerateInvoiceNumberAsync(
+            organizationId,
+            cancellationToken);
+
         var invoice = new Invoice
         {
             Id = Guid.NewGuid(),
             ProjectId = dto.ProjectId,
             OrganizationId = organizationId,
+            InvoiceNumber = invoiceNumber,
             Amount = dto.Amount,
-            Description = dto.Description,
+            Description = string.IsNullOrWhiteSpace(dto.Description)
+                ? null
+                : dto.Description.Trim(),
             CreatedAt = DateTime.UtcNow
         };
 
