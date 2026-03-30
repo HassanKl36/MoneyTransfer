@@ -41,12 +41,21 @@
                 <td>@project.Code</td>
                 <td>@project.Description</td>
                 <td class="text-end">
+
                     <a asp-area="Org"
                        asp-controller="Projects"
                        asp-action="Edit"
                        asp-route-id="@project.Id"
                        class="btn btn-sm btn-outline-primary">
                         Edit
+                    </a>
+
+                    <a asp-area="Org"
+                       asp-controller="Projects"
+                       asp-action="Details"
+                       asp-route-id="@project.Id"
+                       class="btn btn-sm btn-outline-secondary">
+                        Details
                     </a>
 
                     <a asp-area="Org"
@@ -76,6 +85,7 @@
                             Archive
                         </button>
                     </form>
+
                 </td>
             </tr>
         }

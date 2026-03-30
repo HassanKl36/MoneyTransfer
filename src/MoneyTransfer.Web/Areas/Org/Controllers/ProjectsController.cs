@@ -13,13 +13,16 @@ public class ProjectsController : Controller
 {
     private readonly IProjectService _projectService;
     private readonly IClientService _clientService;
+    private readonly IProjectFinancialService _projectFinancialService;
 
     public ProjectsController(
         IProjectService projectService,
-        IClientService clientService)
+        IClientService clientService,
+        IProjectFinancialService projectFinancialService)
     {
         _projectService = projectService;
         _clientService = clientService;
+        _projectFinancialService = projectFinancialService;
     }
 
     [HttpGet]
@@ -31,6 +34,19 @@ public class ProjectsController : Controller
 
         ViewBag.Search = search;
         return View(projects);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Details(Guid id, CancellationToken cancellationToken)
+    {
+        var summary = await _projectFinancialService.GetSummaryAsync(id, cancellationToken);
+
+        if (summary is null)
+        {
+            return NotFound();
+        }
+
+        return View(summary);
     }
 
     [HttpGet]

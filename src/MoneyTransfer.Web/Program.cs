@@ -65,6 +65,7 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IFinancialIdentityGenerator, FinancialIdentityGenerator>();
+builder.Services.AddScoped<IProjectFinancialService, ProjectFinancialService>();
 
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
