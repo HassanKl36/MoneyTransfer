@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using MoneyTransfer.Application.Services.Clients;
 using MoneyTransfer.Application.Services.Projects;
+using MoneyTransfer.Domain.Enums;
 using MoneyTransfer.Web.Areas.Org.Models.Projects;
 
 namespace MoneyTransfer.Web.Areas.Org.Controllers;
@@ -26,13 +27,19 @@ public class ProjectsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(string? search, CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(
+    string? search,
+    ProjectStatus? status,
+    CancellationToken cancellationToken)
     {
         var projects = await _projectService.GetProjectsAsync(
             search: search,
+            status: status,
             cancellationToken: cancellationToken);
 
         ViewBag.Search = search;
+        ViewBag.Status = status;
+
         return View(projects);
     }
 
@@ -131,7 +138,7 @@ public class ProjectsController : Controller
     private async Task<List<SelectListItem>> GetClientSelectListAsync(CancellationToken cancellationToken)
     {
         var clients = await _clientService.GetClientsAsync(
-            includeArchived: false,
+            status: ClientStatus.Active,
             cancellationToken: cancellationToken);
 
         return clients

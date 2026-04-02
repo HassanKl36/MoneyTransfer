@@ -1,4 +1,5 @@
 ﻿using MoneyTransfer.Application.Services.Projects;
+using MoneyTransfer.Domain.Enums;
 
 namespace MoneyTransfer.Application.Services.Projects;
 
@@ -6,7 +7,7 @@ public interface IProjectService
 {
     Task<IReadOnlyList<ProjectListItemDto>> GetProjectsAsync(
         string? search = null,
-        bool includeArchived = false,
+        ProjectStatus? status = null,
         CancellationToken cancellationToken = default);
 
     Task<ProjectEditDto?> GetForEditAsync(

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MoneyTransfer.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace MoneyTransfer.Application.Services.Projects;
 
@@ -18,5 +19,5 @@ public sealed class ProjectEditDto
     [StringLength(1000)]
     public string? Description { get; set; }
 
-    public bool IsArchived { get; set; }
+    public ProjectStatus Status { get; set; } = ProjectStatus.Active;
 }

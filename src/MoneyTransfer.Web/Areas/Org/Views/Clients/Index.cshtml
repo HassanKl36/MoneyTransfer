@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Clients";
     var search = ViewBag.Search as string;
+    var selectedStatus = ViewBag.Status?.ToString();
 }
 
 <h1>Clients</h1>
@@ -17,9 +18,18 @@
     <div class="mb-3">
         <label for="search">Search</label>
         <input id="search" name="search" value="@search" class="form-control" />
-        <button type="submit" class="btn btn-primary">Search</button>
-        <a asp-area="Org" asp-controller="Clients" asp-action="Index" class="btn btn-secondary">Clear</a>
     </div>
+
+    <div class="mb-3">
+        <label for="status">Status</label>
+        <select id="status" name="status" class="form-select">
+            <option value="0" selected="@(ViewBag.Status == null || selectedStatus == "Active")">Active</option>
+            <option value="1" selected="@(selectedStatus == "Archived")">Archived</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Search</button>
+    <a asp-area="Org" asp-controller="Clients" asp-action="Index" class="btn btn-secondary">Clear</a>
 </form>
 
 <table class="table table-striped">
@@ -28,7 +38,7 @@
             <th>Name</th>
             <th>Phone Number</th>
             <th>Email</th>
-            <th>Archived</th>
+            <th>Status</th>
             <th></th>
         </tr>
     </thead>
@@ -47,7 +57,7 @@
                     <td>@client.Name</td>
                     <td>@client.PhoneNumber</td>
                     <td>@client.Email</td>
-                    <td>@(client.IsArchived ? "Yes" : "No")</td>
+                    <td>@client.Status</td>
                     <td class="text-nowrap">
                         <a asp-area="Org"
                            asp-controller="Clients"

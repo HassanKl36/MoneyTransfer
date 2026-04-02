@@ -2,6 +2,7 @@
 using MoneyTransfer.Application.Common.Interfaces;
 using MoneyTransfer.Application.Services.Payments;
 using MoneyTransfer.Domain.Entities;
+using MoneyTransfer.Domain.Enums;
 using MoneyTransfer.Infrastructure.Data;
 
 namespace MoneyTransfer.Infrastructure.Services.Payments;
@@ -34,7 +35,7 @@ public sealed class PaymentService : IPaymentService
                 p => p.Id == projectId && p.OrganizationId == organizationId,
                 cancellationToken);
 
-        if (project is null || project.IsArchived)
+        if (project is null || project.Status == ProjectStatus.Archived)
         {
             throw new InvalidOperationException("Project not available.");
         }
@@ -66,7 +67,7 @@ public sealed class PaymentService : IPaymentService
                 p => p.Id == projectId && p.OrganizationId == organizationId,
                 cancellationToken);
 
-        if (project is null || project.IsArchived)
+        if (project is null || project.Status == ProjectStatus.Archived)
         {
             throw new InvalidOperationException("Project not available for payment creation.");
         }
@@ -93,7 +94,7 @@ public sealed class PaymentService : IPaymentService
             throw new InvalidOperationException("Project not found.");
         }
 
-        if (project.IsArchived)
+        if (project.Status == ProjectStatus.Archived)
         {
             throw new InvalidOperationException("Archived projects cannot receive payments.");
         }

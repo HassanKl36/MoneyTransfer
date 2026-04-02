@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MoneyTransfer.Application.Common.Interfaces;
 using MoneyTransfer.Application.Services.Projects;
+using MoneyTransfer.Domain.Enums;
 using MoneyTransfer.Infrastructure.Data;
 
 namespace MoneyTransfer.Infrastructure.Services.Projects;
@@ -23,7 +24,7 @@ public sealed class ProjectService : IProjectService
 
     public async Task<IReadOnlyList<ProjectListItemDto>> GetProjectsAsync(
         string? search = null,
-        bool includeArchived = false,
+        ProjectStatus? status = null,
         CancellationToken cancellationToken = default)
     {
         var organizationId = GetRequiredOrganizationId();
@@ -42,10 +43,11 @@ public sealed class ProjectService : IProjectService
                 (p.Description != null && p.Description.Contains(term)));
         }
 
-        if (!includeArchived)
-        {
-            query = query.Where(p => !p.IsArchived);
-        }
+        query = status.HasValue
+            ? query.Where(p => p.Status == status.Value)
+            : query.Where(p =>
+                p.Status == ProjectStatus.Active ||
+                p.Status == ProjectStatus.Completed);
 
         return await query
             .OrderBy(p => p.Name)
@@ -57,7 +59,7 @@ public sealed class ProjectService : IProjectService
                 Name = p.Name,
                 Code = p.Code,
                 Description = p.Description,
-                IsArchived = p.IsArchived
+                Status = p.Status
             })
             .ToListAsync(cancellationToken);
     }
@@ -78,7 +80,7 @@ public sealed class ProjectService : IProjectService
                 Name = p.Name,
                 Code = p.Code,
                 Description = p.Description,
-                IsArchived = p.IsArchived
+                Status = p.Status
             })
             .FirstOrDefaultAsync(cancellationToken);
     }
@@ -112,7 +114,7 @@ public sealed class ProjectService : IProjectService
             Name = model.Name.Trim(),
             Code = code,
             Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim(),
-            IsArchived = false
+            Status = ProjectStatus.Active
         };
 
         _dbContext.Projects.Add(project);
@@ -149,7 +151,7 @@ public sealed class ProjectService : IProjectService
         project.ClientId = model.ClientId;
         project.Name = model.Name.Trim();
         project.Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim();
-        project.IsArchived = model.IsArchived;
+        project.Status = model.Status;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
@@ -171,7 +173,7 @@ public sealed class ProjectService : IProjectService
             return false;
         }
 
-        project.IsArchived = true;
+        project.Status = ProjectStatus.Archived;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;

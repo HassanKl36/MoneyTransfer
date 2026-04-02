@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MoneyTransfer.Application.Common.Interfaces;
 using MoneyTransfer.Application.Services.Clients;
+using MoneyTransfer.Domain.Enums;
 using MoneyTransfer.Infrastructure.Data;
 
 namespace MoneyTransfer.Infrastructure.Services.Clients;
@@ -20,7 +21,7 @@ public sealed class ClientService : IClientService
 
     public async Task<IReadOnlyList<ClientListItemDto>> GetClientsAsync(
         string? search = null,
-        bool includeArchived = false,
+        ClientStatus? status = null,
         CancellationToken cancellationToken = default)
     {
         var organizationId = GetRequiredOrganizationId();
@@ -39,10 +40,9 @@ public sealed class ClientService : IClientService
                 (c.Email != null && c.Email.Contains(term)));
         }
 
-        if (!includeArchived)
-        {
-            query = query.Where(c => !c.IsArchived);
-        }
+        query = status.HasValue
+            ? query.Where(c => c.Status == status.Value)
+            : query.Where(c => c.Status == ClientStatus.Active);
 
         return await query
             .OrderBy(c => c.Name)
@@ -52,7 +52,7 @@ public sealed class ClientService : IClientService
                 Name = c.Name,
                 PhoneNumber = c.PhoneNumber,
                 Email = c.Email,
-                IsArchived = c.IsArchived
+                Status = c.Status
             })
             .ToListAsync(cancellationToken);
     }
@@ -72,7 +72,7 @@ public sealed class ClientService : IClientService
                 Name = c.Name,
                 PhoneNumber = c.PhoneNumber,
                 Email = c.Email,
-                IsArchived = c.IsArchived
+                Status = c.Status
             })
             .FirstOrDefaultAsync(cancellationToken);
     }
@@ -90,7 +90,7 @@ public sealed class ClientService : IClientService
             Name = model.Name.Trim(),
             PhoneNumber = model.PhoneNumber.Trim(),
             Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim(),
-            IsArchived = false
+            Status = ClientStatus.Active
         };
 
         _dbContext.Clients.Add(client);
@@ -116,7 +116,7 @@ public sealed class ClientService : IClientService
         client.Name = model.Name.Trim();
         client.PhoneNumber = model.PhoneNumber.Trim();
         client.Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim();
-        client.IsArchived = model.IsArchived;
+        client.Status = model.Status;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
@@ -138,7 +138,7 @@ public sealed class ClientService : IClientService
             return false;
         }
 
-        client.IsArchived = true;
+        client.Status = ClientStatus.Archived;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;

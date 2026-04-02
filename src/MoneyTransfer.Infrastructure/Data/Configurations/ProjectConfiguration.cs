@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using MoneyTransfer.Domain.Entities;
+using MoneyTransfer.Domain.Enums;
 
 namespace MoneyTransfer.Infrastructure.Data.Configurations;
 
@@ -23,8 +24,9 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
         builder.Property(x => x.Description)
             .HasMaxLength(1000);
 
-        builder.Property(x => x.IsArchived)
-            .HasDefaultValue(false);
+        builder.Property(x => x.Status)
+            .IsRequired()
+            .HasDefaultValue(ProjectStatus.Active);
 
         builder.HasIndex(x => x.OrganizationId);
         builder.HasIndex(x => x.ClientId);

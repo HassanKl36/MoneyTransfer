@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MoneyTransfer.Application.Services.Clients;
+using MoneyTransfer.Domain.Enums;
 
 namespace MoneyTransfer.Web.Areas.Org.Controllers;
 
@@ -16,13 +17,19 @@ public class ClientsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(string? search, CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(
+    string? search,
+    ClientStatus? status,
+    CancellationToken cancellationToken)
     {
         var clients = await _clientService.GetClientsAsync(
             search: search,
+            status: status,
             cancellationToken: cancellationToken);
 
         ViewBag.Search = search;
+        ViewBag.Status = status;
+
         return View(clients);
     }
 

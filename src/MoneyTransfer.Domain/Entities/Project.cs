@@ -1,4 +1,6 @@
-﻿namespace MoneyTransfer.Domain.Entities;
+﻿using MoneyTransfer.Domain.Enums;
+
+namespace MoneyTransfer.Domain.Entities;
 
 public sealed class Project
 {
@@ -17,7 +19,7 @@ public sealed class Project
 
     public string? Description { get; set; }
 
-    public bool IsArchived { get; set; }
+    public ProjectStatus Status { get; set; }
 
     public ICollection<LedgerEntry> LedgerEntries { get; set; } = new List<LedgerEntry>();
 }

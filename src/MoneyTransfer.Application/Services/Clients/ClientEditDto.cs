@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MoneyTransfer.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace MoneyTransfer.Application.Services.Clients;
 
@@ -18,5 +19,5 @@ public sealed class ClientEditDto
     [StringLength(256)]
     public string? Email { get; set; }
 
-    public bool IsArchived { get; set; }
+    public ClientStatus Status { get; set; } = ClientStatus.Active;
 }

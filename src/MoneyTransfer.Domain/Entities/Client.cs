@@ -1,4 +1,6 @@
-﻿namespace MoneyTransfer.Domain.Entities;
+﻿using MoneyTransfer.Domain.Enums;
+
+namespace MoneyTransfer.Domain.Entities;
 
 public sealed class Client
 {
@@ -9,7 +11,7 @@ public sealed class Client
 
     public string Name { get; set; } = string.Empty;
 
-    public bool IsArchived { get; set; }
+    public ClientStatus Status { get; set; }
 
     public string PhoneNumber { get; set; } = null!;
 

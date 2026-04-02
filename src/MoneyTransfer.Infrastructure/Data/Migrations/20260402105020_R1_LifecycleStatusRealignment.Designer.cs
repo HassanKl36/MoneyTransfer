@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MoneyTransfer.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using MoneyTransfer.Infrastructure.Data;
 namespace MoneyTransfer.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(MoneyTransferDbContext))]
-    partial class MoneyTransferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260402105020_R1_LifecycleStatusRealignment")]
+    partial class R1_LifecycleStatusRealignment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

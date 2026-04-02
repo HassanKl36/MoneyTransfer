@@ -1,4 +1,6 @@
-﻿namespace MoneyTransfer.Application.Services.Projects;
+﻿using MoneyTransfer.Domain.Enums;
+
+namespace MoneyTransfer.Application.Services.Projects;
 
 public sealed class ProjectListItemDto
 {
@@ -11,5 +13,5 @@ public sealed class ProjectListItemDto
     public string Code { get; set; } = string.Empty;
     public string? Description { get; set; }
 
-    public bool IsArchived { get; set; }
+    public ProjectStatus Status { get; set; }
 }

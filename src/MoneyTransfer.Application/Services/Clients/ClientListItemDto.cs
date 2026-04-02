@@ -1,4 +1,6 @@
-﻿namespace MoneyTransfer.Application.Services.Clients;
+﻿using MoneyTransfer.Domain.Enums;
+
+namespace MoneyTransfer.Application.Services.Clients;
 
 public sealed class ClientListItemDto
 {
@@ -6,5 +8,5 @@ public sealed class ClientListItemDto
     public string Name { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = null!;
     public string? Email { get; set; }
-    public bool IsArchived { get; set; }
+    public ClientStatus Status { get; set; }
 }

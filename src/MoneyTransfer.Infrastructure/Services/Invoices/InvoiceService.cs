@@ -2,6 +2,7 @@
 using MoneyTransfer.Application.Common.Interfaces;
 using MoneyTransfer.Application.Services.Invoices;
 using MoneyTransfer.Domain.Entities;
+using MoneyTransfer.Domain.Enums;
 using MoneyTransfer.Infrastructure.Data;
 
 namespace MoneyTransfer.Infrastructure.Services.Invoices;
@@ -32,7 +33,7 @@ public sealed class InvoiceService : IInvoiceService
             .AnyAsync(
                 x => x.Id == projectId
                   && x.OrganizationId == organizationId
-                  && !x.IsArchived,
+                  && x.Status != ProjectStatus.Archived,
                 cancellationToken);
 
         if (!projectExists)
@@ -67,7 +68,7 @@ public sealed class InvoiceService : IInvoiceService
             .AnyAsync(
                 x => x.Id == projectId
                   && x.OrganizationId == organizationId
-                  && !x.IsArchived,
+                  && x.Status != ProjectStatus.Archived,
                 cancellationToken);
 
         if (!projectExists)
@@ -92,7 +93,7 @@ public sealed class InvoiceService : IInvoiceService
             .AnyAsync(
                 x => x.Id == dto.ProjectId
                   && x.OrganizationId == organizationId
-                  && !x.IsArchived,
+                  && x.Status != ProjectStatus.Archived,
                 cancellationToken);
 
         if (!projectExists)
