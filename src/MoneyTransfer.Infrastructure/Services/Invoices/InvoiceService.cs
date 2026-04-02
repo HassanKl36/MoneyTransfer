@@ -44,13 +44,14 @@ public sealed class InvoiceService : IInvoiceService
         return await _dbContext.Invoices
             .AsNoTracking()
             .Where(x => x.ProjectId == projectId && x.OrganizationId == organizationId)
-            .OrderByDescending(x => x.CreatedAt)
+            .OrderByDescending(x => x.Date)
             .Select(x => new InvoiceListItemDto
             {
                 Id = x.Id,
                 ProjectId = x.ProjectId,
                 InvoiceNumber = x.InvoiceNumber,
                 Amount = x.Amount,
+                Date = x.Date,
                 Description = x.Description,
                 CreatedAt = x.CreatedAt
             })
@@ -78,7 +79,8 @@ public sealed class InvoiceService : IInvoiceService
 
         return new InvoiceCreateDto
         {
-            ProjectId = projectId
+            ProjectId = projectId,
+            Date = DateTime.Today
         };
     }
 
@@ -112,6 +114,7 @@ public sealed class InvoiceService : IInvoiceService
             OrganizationId = organizationId,
             InvoiceNumber = invoiceNumber,
             Amount = dto.Amount,
+            Date = dto.Date,
             Description = string.IsNullOrWhiteSpace(dto.Description)
                 ? null
                 : dto.Description.Trim(),

@@ -31,7 +31,7 @@ else
                 <th>Payment Reference</th>
                 <th>Amount</th>
                 <th>Description</th>
-                <th>Created At</th>
+                <th>Date</th>
             </tr>
         </thead>
         <tbody>
@@ -41,7 +41,7 @@ else
                     <td>@payment.PaymentReference</td>
                     <td>@payment.Amount</td>
                     <td>@payment.Description</td>
-                    <td>@payment.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@payment.Date.ToString("dd/MM/yyyy")</td>
                 </tr>
             }
         </tbody>

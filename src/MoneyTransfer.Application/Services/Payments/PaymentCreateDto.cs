@@ -11,6 +11,12 @@ public sealed class PaymentCreateDto
     [Range(typeof(decimal), "0.01", "79228162514264337593543950335")]
     public decimal Amount { get; set; }
 
+    [Required]
+    public DateTime Date { get; set; }
+
+    [StringLength(100)]
+    public string? PaymentMethod { get; set; }
+
     [StringLength(1000)]
     public string? Description { get; set; }
 }

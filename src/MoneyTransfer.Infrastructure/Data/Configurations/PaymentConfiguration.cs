@@ -16,12 +16,18 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .IsRequired()
             .HasColumnType("decimal(18,2)");
 
+        builder.Property(p => p.Date)
+            .IsRequired();
+
         builder.Property(p => p.PaymentReference)
             .IsRequired()
             .HasMaxLength(20);
 
+        builder.Property(p => p.PaymentMethod)
+            .HasMaxLength(100);
+
         builder.Property(p => p.Description)
-            .HasMaxLength(500);
+            .HasMaxLength(1000);
 
         builder.Property(p => p.CreatedAt)
             .IsRequired();

@@ -26,6 +26,9 @@ public sealed class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
             .HasColumnType("decimal(18,2)")
             .IsRequired();
 
+        builder.Property(x => x.Date)
+            .IsRequired();
+
         builder.Property(x => x.Description)
             .HasMaxLength(1000);
 

@@ -43,12 +43,14 @@ public sealed class PaymentService : IPaymentService
         return await _dbContext.Set<Payment>()
             .AsNoTracking()
             .Where(p => p.ProjectId == projectId && p.OrganizationId == organizationId)
-            .OrderByDescending(p => p.CreatedAt)
+            .OrderByDescending(p => p.Date)
             .Select(p => new PaymentListItemDto
             {
                 Id = p.Id,
                 PaymentReference = p.PaymentReference,
                 Amount = p.Amount,
+                Date = p.Date,
+                PaymentMethod = p.PaymentMethod,
                 Description = p.Description,
                 CreatedAt = p.CreatedAt
             })
@@ -74,7 +76,8 @@ public sealed class PaymentService : IPaymentService
 
         return new PaymentCreateDto
         {
-            ProjectId = projectId
+            ProjectId = projectId,
+            Date = DateTime.Today
         };
     }
 
@@ -110,6 +113,10 @@ public sealed class PaymentService : IPaymentService
             OrganizationId = organizationId,
             PaymentReference = paymentReference,
             Amount = dto.Amount,
+            Date = dto.Date,
+            PaymentMethod = string.IsNullOrWhiteSpace(dto.PaymentMethod)
+                ? null
+                : dto.PaymentMethod.Trim(),
             Description = string.IsNullOrWhiteSpace(dto.Description)
                 ? null
                 : dto.Description.Trim(),
