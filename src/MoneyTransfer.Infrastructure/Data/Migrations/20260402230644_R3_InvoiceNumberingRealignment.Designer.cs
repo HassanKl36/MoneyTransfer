@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MoneyTransfer.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using MoneyTransfer.Infrastructure.Data;
 namespace MoneyTransfer.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(MoneyTransferDbContext))]
-    partial class MoneyTransferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260402230644_R3_InvoiceNumberingRealignment")]
+    partial class R3_InvoiceNumberingRealignment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -303,9 +306,6 @@ namespace MoneyTransfer.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
-
                     b.ToTable("Organizations", (string)null);
                 });
 
@@ -436,10 +436,6 @@ namespace MoneyTransfer.Infrastructure.Data.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");

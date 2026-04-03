@@ -100,7 +100,13 @@ public sealed class FinancialIdentityGenerator : IFinancialIdentityGenerator
             await _dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            return $"{prefix}-{nextValue.ToString($"D{padding}")}";
+            var organizationCode = await _dbContext.Organizations
+                .AsNoTracking()
+                .Where(x => x.Id == organizationId)
+                .Select(x => x.Code)
+                .SingleAsync(cancellationToken);
+
+            return $"{organizationCode}-{prefix}-{nextValue.ToString($"D{padding}")}";
         });
     }
 

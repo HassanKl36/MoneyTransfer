@@ -20,7 +20,7 @@ public sealed class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
 
         builder.Property(x => x.InvoiceNumber)
             .IsRequired()
-            .HasMaxLength(20);
+            .HasMaxLength(31);
 
         builder.Property(x => x.Amount)
             .HasColumnType("decimal(18,2)")

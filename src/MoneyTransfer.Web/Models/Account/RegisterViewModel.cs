@@ -9,6 +9,11 @@ public sealed class RegisterViewModel
     public string OrganizationName { get; set; } = string.Empty;
 
     [Required]
+    [MaxLength(20)]
+    [Display(Name = "Organization Code")]
+    public string OrganizationCode { get; set; } = string.Empty;
+
+    [Required]
     [Display(Name = "Full Name")]
     public string FullName { get; set; } = string.Empty;
 

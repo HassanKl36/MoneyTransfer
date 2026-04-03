@@ -20,6 +20,9 @@ public sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organiz
             .IsRequired()
             .HasMaxLength(20);
 
+        builder.HasIndex(x => x.Code)
+            .IsUnique();
+
         builder.HasOne(x => x.Sequence)
             .WithOne(x => x.Organization)
             .HasForeignKey<OrganizationSequence>(x => x.OrganizationId)

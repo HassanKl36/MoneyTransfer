@@ -26,11 +26,17 @@ public sealed class AuthenticationService : IAuthenticationService
 
         var email = request.Email.Trim();
         var organizationName = request.OrganizationName.Trim();
+        var organizationCode = request.OrganizationCode?.Trim();
         var fullName = request.FullName.Trim();
 
         if (string.IsNullOrWhiteSpace(organizationName))
         {
             result.Errors.Add("Organization name is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(organizationCode))
+        {
+            result.Errors.Add("Organization code is required.");
         }
 
         if (string.IsNullOrWhiteSpace(fullName))
@@ -53,6 +59,8 @@ public sealed class AuthenticationService : IAuthenticationService
             return result;
         }
 
+        organizationCode = organizationCode!.ToUpperInvariant();
+
         var emailExists = await _userManager.FindByEmailAsync(email);
         if (emailExists is not null)
         {
@@ -70,6 +78,15 @@ public sealed class AuthenticationService : IAuthenticationService
             return result;
         }
 
+        var codeExists = await _dbContext.Organizations
+            .AnyAsync(x => x.Code.ToUpper() == organizationCode);
+
+        if (codeExists)
+        {
+            result.Errors.Add("An organization with this code already exists.");
+            return result;
+        }
+
         await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
         try
@@ -77,7 +94,8 @@ public sealed class AuthenticationService : IAuthenticationService
             var organization = new Organization
             {
                 Id = Guid.NewGuid(),
-                Name = organizationName
+                Name = organizationName,
+                Code = organizationCode
             };
 
             _dbContext.Organizations.Add(organization);
@@ -87,6 +105,7 @@ public sealed class AuthenticationService : IAuthenticationService
             {
                 UserName = email,
                 Email = email,
+                FullName = fullName,
                 OrganizationId = organization.Id
             };
 

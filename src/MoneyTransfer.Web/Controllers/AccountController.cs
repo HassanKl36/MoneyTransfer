@@ -44,6 +44,7 @@ public class AccountController : Controller
         var result = await _authenticationService.RegisterOrganizationAsync(new RegisterOrganizationRequest
         {
             OrganizationName = model.OrganizationName,
+            OrganizationCode = model.OrganizationCode,
             FullName = model.FullName,
             Email = model.Email,
             Password = model.Password
