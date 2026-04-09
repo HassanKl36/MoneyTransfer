@@ -1,15 +1,11 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
-@model MoneyTransfer.Application.Services.Projects.ProjectFinancialSummaryDto
+﻿@model MoneyTransfer.Application.Services.Projects.ProjectLedgerDetailsDto
+@using MoneyTransfer.Domain.Enums
 
 @{
-    ViewData["Title"] = "Project Financial Summary";
+    ViewData["Title"] = "Project Details";
 }
 
-<h1>Project Financial Summary</h1>
+<h1>Project Details</h1>
 
 <div class="mt-4">
     <dl class="row">
@@ -23,6 +19,92 @@
         <dd class="col-sm-9">@Model.RemainingBalance</dd>
     </dl>
 </div>
+
+<form method="get" class="mt-4 mb-4">
+    <input type="hidden" name="id" value="@ViewContext.RouteData.Values["id"]" />
+
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label for="fromDate" class="form-label">From Date</label>
+            <input type="date"
+                   id="fromDate"
+                   name="fromDate"
+                   value="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+                   class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="toDate" class="form-label">To Date</label>
+            <input type="date"
+                   id="toDate"
+                   name="toDate"
+                   value="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+                   class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="transactionType" class="form-label">Transaction Type</label>
+            <select id="transactionType" name="transactionType" class="form-select">
+                <option value="">All</option>
+                @foreach (var type in Enum.GetValues<LedgerEntryType>())
+                {
+                    if (Model.TransactionType == type)
+                    {
+                        <option value="@type" selected="selected">@type</option>
+                    }
+                    else
+                    {
+                        <option value="@type">@type</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+            <a asp-area="Org"
+               asp-controller="Projects"
+               asp-action="Details"
+               asp-route-id="@ViewContext.RouteData.Values["id"]"
+               class="btn btn-outline-secondary">
+                Clear
+            </a>
+        </div>
+    </div>
+</form>
+
+<h2>Ledger Entries</h2>
+
+@if (Model.Entries.Count == 0)
+{
+    <p>No ledger entries found for the selected filters.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Occurred At</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Reference</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in Model.Entries)
+            {
+                <tr>
+                    <td>@entry.OccurredAt</td>
+                    <td>@entry.Type</td>
+                    <td>@entry.Amount</td>
+                    <td>@entry.Reference</td>
+                    <td>@entry.Notes</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 <div class="mt-3">
     <a asp-area="Org" asp-controller="Projects" asp-action="Index" class="btn btn-secondary">

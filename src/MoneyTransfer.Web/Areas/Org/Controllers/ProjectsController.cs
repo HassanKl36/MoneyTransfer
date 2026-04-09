@@ -28,9 +28,9 @@ public class ProjectsController : Controller
 
     [HttpGet]
     public async Task<IActionResult> Index(
-    string? search,
-    ProjectStatus? status,
-    CancellationToken cancellationToken)
+        string? search,
+        ProjectStatus? status,
+        CancellationToken cancellationToken)
     {
         var projects = await _projectService.GetProjectsAsync(
             search: search,
@@ -44,16 +44,26 @@ public class ProjectsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Details(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Details(
+        Guid id,
+        DateTime? fromDate,
+        DateTime? toDate,
+        LedgerEntryType? transactionType,
+        CancellationToken cancellationToken)
     {
-        var summary = await _projectFinancialService.GetSummaryAsync(id, cancellationToken);
+        var details = await _projectFinancialService.GetLedgerDetailsAsync(
+            id,
+            fromDate,
+            toDate,
+            transactionType,
+            cancellationToken);
 
-        if (summary is null)
+        if (details is null)
         {
             return NotFound();
         }
 
-        return View(summary);
+        return View(details);
     }
 
     [HttpGet]
