@@ -93,15 +93,15 @@ public sealed class InvoiceService : IInvoiceService
     {
         var organizationId = GetRequiredOrganizationId();
 
-        var projectExists = await _dbContext.Projects
+        var project = await _dbContext.Projects
             .AsNoTracking()
-            .AnyAsync(
+            .FirstOrDefaultAsync(
                 x => x.Id == dto.ProjectId
                   && x.OrganizationId == organizationId
                   && x.Status != ProjectStatus.Archived,
                 cancellationToken);
 
-        if (!projectExists)
+        if (project is null)
         {
             throw new InvalidOperationException("Project was not found.");
         }
@@ -110,22 +110,45 @@ public sealed class InvoiceService : IInvoiceService
             organizationId,
             cancellationToken);
 
+        var now = DateTime.UtcNow;
+        var userId = GetRequiredUserId();
+        var description = string.IsNullOrWhiteSpace(dto.Description)
+            ? null
+            : dto.Description.Trim();
+
         var invoice = new Invoice
         {
             Id = Guid.NewGuid(),
-            ProjectId = dto.ProjectId,
+            ProjectId = project.Id,
             OrganizationId = organizationId,
             InvoiceNumber = invoiceNumber,
             Amount = dto.Amount,
             Date = dto.Date,
-            Description = string.IsNullOrWhiteSpace(dto.Description)
-                ? null
-                : dto.Description.Trim(),
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = GetRequiredUserId()
+            Description = description,
+            CreatedAt = now,
+            CreatedBy = userId
+        };
+
+        var ledgerEntry = new LedgerEntry
+        {
+            Id = Guid.NewGuid(),
+            OrganizationId = organizationId,
+            ClientId = project.ClientId,
+            ProjectId = project.Id,
+            Type = LedgerEntryType.Invoice,
+            Amount = dto.Amount,
+            OccurredAt = dto.Date,
+            Notes = description,
+            InvoiceNumber = invoiceNumber,
+            IsVoided = false,
+            VoidedAt = null,
+            CreatedAt = now,
+            CreatedBy = userId
         };
 
         _dbContext.Invoices.Add(invoice);
+        _dbContext.LedgerEntries.Add(ledgerEntry);
+
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 

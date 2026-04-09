@@ -109,6 +109,15 @@ public sealed class PaymentService : IPaymentService
             organizationId,
             cancellationToken);
 
+        var now = DateTime.UtcNow;
+        var userId = GetRequiredUserId();
+        var paymentMethod = string.IsNullOrWhiteSpace(dto.PaymentMethod)
+            ? null
+            : dto.PaymentMethod.Trim();
+        var description = string.IsNullOrWhiteSpace(dto.Description)
+            ? null
+            : dto.Description.Trim();
+
         var payment = new Payment
         {
             Id = Guid.NewGuid(),
@@ -117,18 +126,56 @@ public sealed class PaymentService : IPaymentService
             PaymentReference = paymentReference,
             Amount = dto.Amount,
             Date = dto.Date,
-            PaymentMethod = string.IsNullOrWhiteSpace(dto.PaymentMethod)
-                ? null
-                : dto.PaymentMethod.Trim(),
-            Description = string.IsNullOrWhiteSpace(dto.Description)
-                ? null
-                : dto.Description.Trim(),
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = GetRequiredUserId()
+            PaymentMethod = paymentMethod,
+            Description = description,
+            CreatedAt = now,
+            CreatedBy = userId
+        };
+
+        var ledgerEntry = new LedgerEntry
+        {
+            Id = Guid.NewGuid(),
+            OrganizationId = organizationId,
+            ClientId = project.ClientId,
+            ProjectId = project.Id,
+            Type = LedgerEntryType.Payment,
+            Amount = -dto.Amount,
+            OccurredAt = dto.Date,
+            Notes = BuildLedgerNotes(paymentReference, paymentMethod, description),
+            InvoiceNumber = null,
+            IsVoided = false,
+            VoidedAt = null,
+            CreatedAt = now,
+            CreatedBy = userId
         };
 
         _dbContext.Set<Payment>().Add(payment);
+        _dbContext.LedgerEntries.Add(ledgerEntry);
+
         await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static string BuildLedgerNotes(
+        string paymentReference,
+        string? paymentMethod,
+        string? description)
+    {
+        var parts = new List<string>
+        {
+            $"Payment Ref: {paymentReference}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(paymentMethod))
+        {
+            parts.Add($"Method: {paymentMethod}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(description))
+        {
+            parts.Add(description);
+        }
+
+        return string.Join(" | ", parts);
     }
 
     private string GetRequiredUserId()

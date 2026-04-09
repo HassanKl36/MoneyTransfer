@@ -36,21 +36,29 @@ public sealed class ProjectFinancialService : IProjectFinancialService
             return null;
         }
 
-        var totalInvoiced = await _dbContext.Invoices
+        var ledgerEntries = _dbContext.LedgerEntries
             .AsNoTracking()
-            .Where(i => i.ProjectId == projectId && i.OrganizationId == organizationId)
-            .SumAsync(i => (decimal?)i.Amount, cancellationToken) ?? 0m;
+            .Where(x =>
+                x.ProjectId == projectId &&
+                x.OrganizationId == organizationId &&
+                !x.IsVoided);
 
-        var totalPaid = await _dbContext.Payments
-            .AsNoTracking()
-            .Where(p => p.ProjectId == projectId && p.OrganizationId == organizationId)
-            .SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
+        var totalInvoiced = await ledgerEntries
+            .Where(x => x.Type == MoneyTransfer.Domain.Enums.LedgerEntryType.Invoice)
+            .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
+
+        var totalPaid = await ledgerEntries
+            .Where(x => x.Type == MoneyTransfer.Domain.Enums.LedgerEntryType.Payment)
+            .SumAsync(x => (decimal?)(-x.Amount), cancellationToken) ?? 0m;
+
+        var balance = await ledgerEntries
+            .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
 
         return new ProjectFinancialSummaryDto
         {
             TotalInvoiced = totalInvoiced,
             TotalPaid = totalPaid,
-            RemainingBalance = totalInvoiced - totalPaid
+            RemainingBalance = balance
         };
     }
 
