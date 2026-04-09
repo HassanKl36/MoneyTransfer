@@ -1,0 +1,36 @@
+﻿@model IReadOnlyList<MoneyTransfer.Application.Services.OrgUsers.OrgUserListItemDto>
+
+@{
+    ViewData["Title"] = "Organization Users";
+}
+
+<h1>Organization Users</h1>
+
+<p>
+    <a asp-area="Org"
+       asp-controller="OrgUsers"
+       asp-action="Create"
+       class="btn btn-primary">
+        Create User
+    </a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Full Name</th>
+            <th>Role</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Email</td>
+                <td>@user.FullName</td>
+                <td>@user.Role</td>
+            </tr>
+        }
+    </tbody>
+</table>

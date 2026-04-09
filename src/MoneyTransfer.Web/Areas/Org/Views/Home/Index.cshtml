@@ -1,4 +1,6 @@
-﻿<h2>Organization Portal</h2>
+﻿@using System.Security.Claims
+
+<h2>Organization Portal</h2>
 
 <p>You are logged into the organization portal.</p>
 
@@ -10,6 +12,13 @@
     <a asp-area="Org" asp-controller="Projects" asp-action="Index" class="btn btn-primary" style="margin-left:10px;">
         Projects
     </a>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-area="Org" asp-controller="OrgUsers" asp-action="Index" class="btn btn-primary" style="margin-left:10px;">
+            Users
+        </a>
+    }
 </div>
 
 <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
