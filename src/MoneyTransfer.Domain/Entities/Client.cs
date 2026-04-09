@@ -17,6 +17,10 @@ public sealed class Client
 
     public string? Email { get; set; }
 
+    public DateTime CreatedAt { get; set; }
+
+    public string CreatedBy { get; set; } = string.Empty;
+
     public ICollection<Project> Projects { get; set; } = new List<Project>();
     public ICollection<LedgerEntry> LedgerEntries { get; set; } = new List<LedgerEntry>();
 }

@@ -10,15 +10,18 @@ public sealed class ProjectService : IProjectService
 {
     private readonly MoneyTransferDbContext _dbContext;
     private readonly ICurrentOrganization _currentOrganization;
+    private readonly ICurrentUser _currentUser;
     private readonly IFinancialIdentityGenerator _financialIdentityGenerator;
 
     public ProjectService(
         MoneyTransferDbContext dbContext,
         ICurrentOrganization currentOrganization,
+        ICurrentUser currentUser,
         IFinancialIdentityGenerator financialIdentityGenerator)
     {
         _dbContext = dbContext;
         _currentOrganization = currentOrganization;
+        _currentUser = currentUser;
         _financialIdentityGenerator = financialIdentityGenerator;
     }
 
@@ -114,7 +117,9 @@ public sealed class ProjectService : IProjectService
             Name = model.Name.Trim(),
             Code = code,
             Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim(),
-            Status = ProjectStatus.Active
+            Status = ProjectStatus.Active,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = GetRequiredUserId()
         };
 
         _dbContext.Projects.Add(project);
@@ -177,6 +182,13 @@ public sealed class ProjectService : IProjectService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    private string GetRequiredUserId()
+    {
+        return _currentUser.UserId
+            ?? throw new InvalidOperationException(
+                "Current user is not authenticated.");
     }
 
     private Guid GetRequiredOrganizationId()

@@ -35,6 +35,10 @@ public sealed class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.Property(x => x.CreatedAt)
             .IsRequired();
 
+        builder.Property(x => x.CreatedBy)
+            .IsRequired()
+            .HasMaxLength(450);
+
         builder.HasIndex(x => new { x.OrganizationId, x.InvoiceNumber })
             .IsUnique();
 

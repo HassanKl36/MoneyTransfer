@@ -5,7 +5,7 @@ using MoneyTransfer.Application.Services.Payments;
 namespace MoneyTransfer.Web.Areas.Org.Controllers;
 
 [Area("Org")]
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = "OrgPortal")]
 public sealed class PaymentsController : Controller
 {
     private readonly IPaymentService _paymentService;

@@ -9,7 +9,7 @@ using MoneyTransfer.Web.Areas.Org.Models.Projects;
 namespace MoneyTransfer.Web.Areas.Org.Controllers;
 
 [Area("Org")]
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = "OrgPortal")]
 public class ProjectsController : Controller
 {
     private readonly IProjectService _projectService;

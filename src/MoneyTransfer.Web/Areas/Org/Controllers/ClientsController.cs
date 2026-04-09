@@ -6,7 +6,7 @@ using MoneyTransfer.Domain.Enums;
 namespace MoneyTransfer.Web.Areas.Org.Controllers;
 
 [Area("Org")]
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = "OrgPortal")]
 public class ClientsController : Controller
 {
     private readonly IClientService _clientService;

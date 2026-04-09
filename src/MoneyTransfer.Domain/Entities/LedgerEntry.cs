@@ -37,4 +37,8 @@ public sealed class LedgerEntry
 
     public bool IsVoided { get; set; }
     public DateTime? VoidedAt { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public string CreatedBy { get; set; } = string.Empty;
 }

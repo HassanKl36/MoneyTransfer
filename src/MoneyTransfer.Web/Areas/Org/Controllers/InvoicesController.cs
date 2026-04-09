@@ -5,7 +5,7 @@ using MoneyTransfer.Application.Services.Invoices;
 namespace MoneyTransfer.Web.Areas.Org.Controllers;
 
 [Area("Org")]
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = "OrgPortal")]
 public sealed class InvoicesController : Controller
 {
     private readonly IInvoiceService _invoiceService;

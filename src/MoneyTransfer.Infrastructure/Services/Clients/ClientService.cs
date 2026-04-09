@@ -10,13 +10,16 @@ public sealed class ClientService : IClientService
 {
     private readonly MoneyTransferDbContext _dbContext;
     private readonly ICurrentOrganization _currentOrganization;
+    private readonly ICurrentUser _currentUser;
 
     public ClientService(
         MoneyTransferDbContext dbContext,
-        ICurrentOrganization currentOrganization)
+        ICurrentOrganization currentOrganization,
+        ICurrentUser currentUser)
     {
         _dbContext = dbContext;
         _currentOrganization = currentOrganization;
+        _currentUser = currentUser;
     }
 
     public async Task<IReadOnlyList<ClientListItemDto>> GetClientsAsync(
@@ -90,7 +93,9 @@ public sealed class ClientService : IClientService
             Name = model.Name.Trim(),
             PhoneNumber = model.PhoneNumber.Trim(),
             Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim(),
-            Status = ClientStatus.Active
+            Status = ClientStatus.Active,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = GetRequiredUserId()
         };
 
         _dbContext.Clients.Add(client);
@@ -142,6 +147,13 @@ public sealed class ClientService : IClientService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    private string GetRequiredUserId()
+    {
+        return _currentUser.UserId
+            ?? throw new InvalidOperationException(
+                "Current user is not authenticated.");
     }
 
     private Guid GetRequiredOrganizationId()

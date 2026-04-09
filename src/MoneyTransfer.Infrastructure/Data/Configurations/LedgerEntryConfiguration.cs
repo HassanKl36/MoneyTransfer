@@ -28,6 +28,13 @@ public sealed class LedgerEntryConfiguration : IEntityTypeConfiguration<LedgerEn
         builder.Property(x => x.InvoiceNumber)
             .HasMaxLength(50);
 
+        builder.Property(x => x.CreatedAt)
+            .IsRequired();
+
+        builder.Property(x => x.CreatedBy)
+            .IsRequired()
+            .HasMaxLength(450);
+
         builder.Property(x => x.IsVoided)
             .HasDefaultValue(false);
 

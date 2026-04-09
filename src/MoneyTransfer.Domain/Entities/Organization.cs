@@ -6,10 +6,12 @@ public sealed class Organization
 
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Short code for invoice numbering later.
-    /// </summary>
     public string Code { get; set; } = string.Empty;
+
+    public DateTime CreatedAt { get; set; }
+
+    public string CreatedBy { get; set; } = string.Empty;
+
     public OrganizationSequence? Sequence { get; set; }
     public ICollection<Client> Clients { get; set; } = new List<Client>();
     public ICollection<Project> Projects { get; set; } = new List<Project>();

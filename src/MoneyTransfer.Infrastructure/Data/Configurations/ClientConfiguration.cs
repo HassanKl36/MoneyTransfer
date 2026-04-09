@@ -24,6 +24,13 @@ public sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
         builder.Property(c => c.Email)
             .HasMaxLength(256);
 
+        builder.Property(x => x.CreatedAt)
+            .IsRequired();
+
+        builder.Property(x => x.CreatedBy)
+            .IsRequired()
+            .HasMaxLength(450);
+
         builder.Property(x => x.Status)
             .IsRequired()
             .HasDefaultValue(ClientStatus.Active);

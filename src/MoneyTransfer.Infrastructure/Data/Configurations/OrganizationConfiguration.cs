@@ -20,6 +20,13 @@ public sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organiz
             .IsRequired()
             .HasMaxLength(20);
 
+        builder.Property(x => x.CreatedAt)
+            .IsRequired();
+
+        builder.Property(x => x.CreatedBy)
+            .IsRequired()
+            .HasMaxLength(450);
+
         builder.HasIndex(x => x.Code)
             .IsUnique();
 

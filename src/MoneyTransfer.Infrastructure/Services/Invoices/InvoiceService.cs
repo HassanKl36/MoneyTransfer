@@ -11,15 +11,18 @@ public sealed class InvoiceService : IInvoiceService
 {
     private readonly MoneyTransferDbContext _dbContext;
     private readonly ICurrentOrganization _currentOrganization;
+    private readonly ICurrentUser _currentUser;
     private readonly IFinancialIdentityGenerator _financialIdentityGenerator;
 
     public InvoiceService(
         MoneyTransferDbContext dbContext,
         ICurrentOrganization currentOrganization,
+        ICurrentUser currentUser,
         IFinancialIdentityGenerator financialIdentityGenerator)
     {
         _dbContext = dbContext;
         _currentOrganization = currentOrganization;
+        _currentUser = currentUser;
         _financialIdentityGenerator = financialIdentityGenerator;
     }
 
@@ -118,11 +121,19 @@ public sealed class InvoiceService : IInvoiceService
             Description = string.IsNullOrWhiteSpace(dto.Description)
                 ? null
                 : dto.Description.Trim(),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = GetRequiredUserId()
         };
 
         _dbContext.Invoices.Add(invoice);
         await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private string GetRequiredUserId()
+    {
+        return _currentUser.UserId
+            ?? throw new InvalidOperationException(
+                "Current user is not authenticated.");
     }
 
     private Guid GetRequiredOrganizationId()

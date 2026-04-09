@@ -32,6 +32,10 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.CreatedAt)
             .IsRequired();
 
+        builder.Property(p => p.CreatedBy)
+            .IsRequired()
+            .HasMaxLength(450);
+
         builder.Property(p => p.OrganizationId)
             .IsRequired();
 

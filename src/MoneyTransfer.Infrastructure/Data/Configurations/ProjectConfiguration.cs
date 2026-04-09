@@ -24,6 +24,13 @@ public sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
         builder.Property(x => x.Description)
             .HasMaxLength(1000);
 
+        builder.Property(x => x.CreatedAt)
+            .IsRequired();
+
+        builder.Property(x => x.CreatedBy)
+            .IsRequired()
+            .HasMaxLength(450);
+
         builder.Property(x => x.Status)
             .IsRequired()
             .HasDefaultValue(ProjectStatus.Active);

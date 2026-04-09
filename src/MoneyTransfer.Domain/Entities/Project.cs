@@ -6,7 +6,6 @@ public sealed class Project
 {
     public Guid Id { get; set; }
 
-    // For scoping simplicity (required)
     public Guid OrganizationId { get; set; }
     public Organization? Organization { get; set; }
 
@@ -20,6 +19,10 @@ public sealed class Project
     public string? Description { get; set; }
 
     public ProjectStatus Status { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public string CreatedBy { get; set; } = string.Empty;
 
     public ICollection<LedgerEntry> LedgerEntries { get; set; } = new List<LedgerEntry>();
 }

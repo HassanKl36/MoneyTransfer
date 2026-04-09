@@ -95,7 +95,9 @@ public sealed class AuthenticationService : IAuthenticationService
             {
                 Id = Guid.NewGuid(),
                 Name = organizationName,
-                Code = organizationCode
+                Code = organizationCode,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = string.Empty
             };
 
             _dbContext.Organizations.Add(organization);
@@ -126,6 +128,9 @@ public sealed class AuthenticationService : IAuthenticationService
                 await transaction.RollbackAsync();
                 return result;
             }
+
+            organization.CreatedBy = user.Id;
+            await _dbContext.SaveChangesAsync();
 
             await transaction.CommitAsync();
 
