@@ -42,7 +42,7 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.ProjectId)
             .IsRequired();
 
-        builder.HasIndex(p => new { p.OrganizationId, p.PaymentReference })
+        builder.HasIndex(p => new { p.OrganizationId, p.ProjectId, p.PaymentReference })
             .IsUnique();
 
         builder.HasOne(p => p.Project)

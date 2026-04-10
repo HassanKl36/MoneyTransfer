@@ -52,5 +52,13 @@ else
 }
 
 <p>
+    <a asp-area="Org"
+       asp-controller="Payments"
+       asp-action="CreateClientAllocation"
+       asp-route-clientId="@Model.Id"
+       class="btn btn-primary">
+        Record Client Payment Allocation
+    </a>
+
     <a asp-area="Org" asp-controller="Clients" asp-action="Index" class="btn btn-secondary">Back to Clients</a>
 </p>

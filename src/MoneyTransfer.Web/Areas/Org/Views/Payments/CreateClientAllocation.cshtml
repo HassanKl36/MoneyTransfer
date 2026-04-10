@@ -1,0 +1,98 @@
+﻿@model MoneyTransfer.Application.Services.Payments.ClientPaymentCreateDto
+
+@{
+    ViewData["Title"] = "Record Client Payment Allocation";
+}
+
+<h1>Record Client Payment Allocation</h1>
+
+<div class="mb-4">
+    <dl class="row">
+        <dt class="col-sm-3">Client</dt>
+        <dd class="col-sm-9">@Model.ClientName</dd>
+    </dl>
+</div>
+
+<form asp-area="Org" asp-controller="Payments" asp-action="CreateClientAllocation" method="post">
+    @Html.AntiForgeryToken()
+    <input asp-for="ClientId" type="hidden" />
+    <input asp-for="ClientName" type="hidden" />
+
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <div class="mb-3">
+        <label asp-for="TotalAmount" class="form-label"></label>
+        <input asp-for="TotalAmount" class="form-control" />
+        <span asp-validation-for="TotalAmount" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Date" class="form-label"></label>
+        <input asp-for="Date" type="date" class="form-control" />
+        <span asp-validation-for="Date" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="PaymentMethod" class="form-label"></label>
+        <input asp-for="PaymentMethod" class="form-control" />
+        <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <h2>Allocations</h2>
+
+    @if (Model.AvailableProjects.Count == 0)
+    {
+        <p class="text-danger">This client has no available projects for allocation.</p>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Project</th>
+                    <th>Code</th>
+                    <th>Current Balance</th>
+                    <th>Allocate Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < Model.AvailableProjects.Count; i++)
+                {
+                    <tr>
+                        <td>
+                            @Model.AvailableProjects[i].ProjectName
+                        </td>
+                        <td>@Model.AvailableProjects[i].ProjectCode</td>
+                        <td>@Model.AvailableProjects[i].CurrentBalance.ToString("0.00")</td>
+                        <td>
+                            <input type="hidden" name="Allocations[@i].ProjectId" value="@Model.AvailableProjects[i].ProjectId" />
+                            <input type="text"
+                                   name="Allocations[@i].Amount"
+                                   value="@(Model.Allocations.Count > i ? Model.Allocations[i].Amount : 0)"
+                                   class="form-control" />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-area="Org"
+       asp-controller="Clients"
+       asp-action="Details"
+       asp-route-id="@Model.ClientId"
+       class="btn btn-secondary">
+        Cancel
+    </a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MoneyTransfer.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using MoneyTransfer.Infrastructure.Data;
 namespace MoneyTransfer.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(MoneyTransferDbContext))]
-    partial class MoneyTransferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260410114034_F13_ClientPaymentAllocation")]
+    partial class F13_ClientPaymentAllocation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -475,7 +478,7 @@ namespace MoneyTransfer.Infrastructure.Data.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.HasIndex("OrganizationId", "ProjectId", "PaymentReference")
+                    b.HasIndex("OrganizationId", "PaymentReference")
                         .IsUnique();
 
                     b.ToTable("Payments", (string)null);
