@@ -21,4 +21,7 @@ public interface IClientService
     Task<bool> ArchiveAsync(
         Guid id, 
         CancellationToken cancellationToken = default);
+    Task<ClientDetailsDto?> GetDetailsAsync(
+    Guid clientId,
+    CancellationToken cancellationToken = default);
 }

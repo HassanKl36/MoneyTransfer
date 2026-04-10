@@ -61,6 +61,14 @@
                     <td class="text-nowrap">
                         <a asp-area="Org"
                            asp-controller="Clients"
+                           asp-action="Details"
+                           asp-route-id="@client.Id"
+                           class="btn btn-sm btn-info">
+                            Details
+                        </a>
+
+                        <a asp-area="Org"
+                           asp-controller="Clients"
                            asp-action="Edit"
                            asp-route-id="@client.Id"
                            class="btn btn-sm btn-warning">

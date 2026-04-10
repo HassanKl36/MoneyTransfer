@@ -60,6 +60,73 @@ public sealed class ClientService : IClientService
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<ClientDetailsDto?> GetDetailsAsync(
+        Guid clientId,
+        CancellationToken cancellationToken = default)
+    {
+        var organizationId = GetRequiredOrganizationId();
+
+        var client = await _dbContext.Clients
+            .AsNoTracking()
+            .Where(c => c.OrganizationId == organizationId && c.Id == clientId)
+            .Select(c => new ClientDetailsDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                PhoneNumber = c.PhoneNumber,
+                Email = c.Email
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (client is null)
+        {
+            return null;
+        }
+
+        var projects = await _dbContext.Projects
+            .AsNoTracking()
+            .Where(p => p.OrganizationId == organizationId && p.ClientId == clientId)
+            .OrderBy(p => p.Name)
+            .Select(p => new ClientProjectBalanceDto
+            {
+                ProjectId = p.Id,
+                ProjectName = p.Name,
+                ProjectCode = p.Code,
+                Balance = 0m
+            })
+            .ToListAsync(cancellationToken);
+
+        var projectBalances = await _dbContext.LedgerEntries
+            .AsNoTracking()
+            .Where(x =>
+                x.OrganizationId == organizationId &&
+                x.ClientId == clientId &&
+                !x.IsVoided)
+            .GroupBy(x => x.ProjectId)
+            .Select(g => new
+            {
+                ProjectId = g.Key,
+                Balance = g.Sum(x => x.Amount)
+            })
+            .ToDictionaryAsync(
+                x => x.ProjectId,
+                x => x.Balance,
+                cancellationToken);
+
+        foreach (var project in projects)
+        {
+            if (projectBalances.TryGetValue(project.ProjectId, out var balance))
+            {
+                project.Balance = balance;
+            }
+        }
+
+        client.Projects = projects;
+        client.TotalBalance = projects.Sum(x => x.Balance);
+
+        return client;
+    }
+
     public async Task<ClientEditDto?> GetForEditAsync(
         Guid id,
         CancellationToken cancellationToken = default)

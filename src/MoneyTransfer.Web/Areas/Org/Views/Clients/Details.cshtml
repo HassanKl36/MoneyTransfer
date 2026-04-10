@@ -1,0 +1,56 @@
+﻿@model MoneyTransfer.Application.Services.Clients.ClientDetailsDto
+
+@{
+    ViewData["Title"] = "Client Details";
+}
+
+<h1>Client Details</h1>
+
+<div class="mb-4">
+    <dl class="row">
+        <dt class="col-sm-3">Name</dt>
+        <dd class="col-sm-9">@Model.Name</dd>
+
+        <dt class="col-sm-3">Phone Number</dt>
+        <dd class="col-sm-9">@Model.PhoneNumber</dd>
+
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.Email) ? "-" : Model.Email)</dd>
+
+        <dt class="col-sm-3">Total Balance</dt>
+        <dd class="col-sm-9">@Model.TotalBalance.ToString("0.00")</dd>
+    </dl>
+</div>
+
+<h2>Projects</h2>
+
+@if (Model.Projects.Count == 0)
+{
+    <p>No projects found for this client.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Project</th>
+                <th>Code</th>
+                <th>Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var project in Model.Projects)
+            {
+                <tr>
+                    <td>@project.ProjectName</td>
+                    <td>@project.ProjectCode</td>
+                    <td>@project.Balance.ToString("0.00")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<p>
+    <a asp-area="Org" asp-controller="Clients" asp-action="Index" class="btn btn-secondary">Back to Clients</a>
+</p>
