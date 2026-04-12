@@ -11,4 +11,6 @@ public sealed class OrganizationSequence
     public int NextInvoiceNumber { get; set; }
 
     public int NextPaymentNumber { get; set; }
+
+    public int NextDiscountNumber { get; set; }
 }

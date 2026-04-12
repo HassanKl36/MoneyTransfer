@@ -50,6 +50,18 @@ public sealed class FinancialIdentityGenerator : IFinancialIdentityGenerator
             cancellationToken: cancellationToken);
     }
 
+    public Task<string> GenerateDiscountReferenceAsync(
+        Guid organizationId,
+        CancellationToken cancellationToken = default)
+    {
+        return GenerateAsync(
+            organizationId,
+            prefix: "DIS",
+            padding: 6,
+            selector: SequenceType.Discount,
+            cancellationToken: cancellationToken);
+    }
+
     private async Task<string> GenerateAsync(
         Guid organizationId,
         string prefix,
@@ -122,7 +134,8 @@ public sealed class FinancialIdentityGenerator : IFinancialIdentityGenerator
                 OrganizationId = organizationId,
                 NextProjectNumber = 1,
                 NextInvoiceNumber = 1,
-                NextPaymentNumber = 1
+                NextPaymentNumber = 1,
+                NextDiscountNumber = 1
             };
 
             _dbContext.OrganizationSequences.Add(sequence);
@@ -141,6 +154,7 @@ public sealed class FinancialIdentityGenerator : IFinancialIdentityGenerator
             SequenceType.Project => sequence.NextProjectNumber++,
             SequenceType.Invoice => sequence.NextInvoiceNumber++,
             SequenceType.Payment => sequence.NextPaymentNumber++,
+            SequenceType.Discount => sequence.NextDiscountNumber++,
             _ => throw new InvalidOperationException("Unsupported sequence type.")
         };
 
@@ -153,6 +167,7 @@ public sealed class FinancialIdentityGenerator : IFinancialIdentityGenerator
     {
         Project = 1,
         Invoice = 2,
-        Payment = 3
+        Payment = 3,
+        Discount = 4
     }
 }

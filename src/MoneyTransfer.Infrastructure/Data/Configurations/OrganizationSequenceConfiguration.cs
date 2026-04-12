@@ -21,6 +21,9 @@ public sealed class OrganizationSequenceConfiguration : IEntityTypeConfiguration
         builder.Property(x => x.NextPaymentNumber)
             .IsRequired();
 
+        builder.Property(x => x.NextDiscountNumber)
+            .IsRequired();
+
         builder.HasOne(x => x.Organization)
             .WithOne(x => x.Sequence)
             .HasForeignKey<OrganizationSequence>(x => x.OrganizationId)

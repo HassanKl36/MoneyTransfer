@@ -55,6 +55,10 @@ public sealed class ProjectFinancialService : IProjectFinancialService
             .Where(x => x.Type == LedgerEntryType.Payment)
             .SumAsync(x => (decimal?)(-x.Amount), cancellationToken) ?? 0m;
 
+        var totalDiscounted = await allLedgerEntriesQuery
+            .Where(x => x.Type == LedgerEntryType.Discount)
+            .SumAsync(x => (decimal?)(-x.Amount), cancellationToken) ?? 0m;
+
         var remainingBalance = await allLedgerEntriesQuery
             .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
 
@@ -92,10 +96,14 @@ public sealed class ProjectFinancialService : IProjectFinancialService
                     ? x.InvoiceNumber
                     : x.Type == LedgerEntryType.Payment
                         ? GetPaymentReference(x.Notes)
-                        : null,
+                        : x.Type == LedgerEntryType.Discount
+                            ? GetDiscountReference(x.Notes)
+                            : null,
                 Notes = x.Type == LedgerEntryType.Payment
                     ? GetPaymentNotes(x.Notes)
-                    : x.Notes
+                    : x.Type == LedgerEntryType.Discount
+                        ? GetDiscountNotes(x.Notes)
+                        : x.Notes
             })
             .ToListAsync(cancellationToken);
 
@@ -103,6 +111,7 @@ public sealed class ProjectFinancialService : IProjectFinancialService
         {
             TotalInvoiced = totalInvoiced,
             TotalPaid = totalPaid,
+            TotalDiscounted = totalDiscounted,
             RemainingBalance = remainingBalance,
             FromDate = fromDate,
             ToDate = toDate,
@@ -131,6 +140,46 @@ public sealed class ProjectFinancialService : IProjectFinancialService
     }
 
     private static string? GetPaymentNotes(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes))
+        {
+            return null;
+        }
+
+        var parts = notes.Split('|', 2);
+
+        if (parts.Length < 2)
+        {
+            return null;
+        }
+
+        var remainingNotes = parts[1].Trim();
+
+        return string.IsNullOrWhiteSpace(remainingNotes)
+            ? null
+            : remainingNotes;
+    }
+
+    private static string? GetDiscountReference(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes))
+        {
+            return null;
+        }
+
+        var firstSegment = notes.Split('|', 2)[0].Trim();
+
+        const string prefix = "Discount Ref:";
+
+        if (firstSegment.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return firstSegment.Substring(prefix.Length).Trim();
+        }
+
+        return firstSegment;
+    }
+
+    private static string? GetDiscountNotes(string? notes)
     {
         if (string.IsNullOrWhiteSpace(notes))
         {

@@ -8,6 +8,8 @@ public sealed class ProjectLedgerDetailsDto
 
     public decimal TotalPaid { get; set; }
 
+    public decimal TotalDiscounted { get; set; }
+
     public decimal RemainingBalance { get; set; }
 
     public DateTime? FromDate { get; set; }

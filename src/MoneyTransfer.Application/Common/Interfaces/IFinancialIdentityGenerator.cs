@@ -13,4 +13,8 @@ public interface IFinancialIdentityGenerator
     Task<string> GeneratePaymentReferenceAsync(
         Guid organizationId,
         CancellationToken cancellationToken = default);
+
+    Task<string> GenerateDiscountReferenceAsync(
+        Guid organizationId,
+        CancellationToken cancellationToken = default);
 }

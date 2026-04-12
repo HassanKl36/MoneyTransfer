@@ -19,6 +19,7 @@ public sealed class MoneyTransferDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<LedgerEntry> LedgerEntries => Set<LedgerEntry>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<Discount> Discounts => Set<Discount>();
     public DbSet<ClientPaymentHeader> ClientPaymentHeaders => Set<ClientPaymentHeader>();
     public DbSet<ClientPaymentAllocation> ClientPaymentAllocations => Set<ClientPaymentAllocation>();
 

@@ -96,6 +96,14 @@
                             Payments
                         </a>
 
+                        <a asp-area="Org"
+                           asp-controller="Discounts"
+                           asp-action="Index"
+                           asp-route-projectId="@project.Id"
+                           class="btn btn-sm btn-outline-secondary">
+                            Discounts
+                        </a>
+
                         <form asp-area="Org"
                               asp-controller="Projects"
                               asp-action="Archive"

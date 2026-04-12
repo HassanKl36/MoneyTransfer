@@ -1,0 +1,49 @@
+﻿@model IReadOnlyList<MoneyTransfer.Application.Services.Discounts.DiscountListItemDto>
+
+@{
+    ViewData["Title"] = "Discounts";
+    var projectId = (Guid)ViewBag.ProjectId;
+}
+
+<h1>Discounts</h1>
+
+<p>
+    <a asp-area="Org"
+       asp-controller="Discounts"
+       asp-action="Create"
+       asp-route-projectId="@projectId"
+       class="btn btn-primary">
+        Create Discount
+    </a>
+</p>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        No discounts found for this project.
+    </div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Discount Reference</th>
+                <th>Amount</th>
+                <th>Reason</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var discount in Model)
+            {
+                <tr>
+                    <td>@discount.DiscountReference</td>
+                    <td>@discount.Amount</td>
+                    <td>@discount.Reason</td>
+                    <td>@discount.Date.ToString("dd/MM/yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

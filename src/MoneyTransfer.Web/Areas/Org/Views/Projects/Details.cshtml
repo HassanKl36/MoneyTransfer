@@ -3,9 +3,36 @@
 
 @{
     ViewData["Title"] = "Project Details";
+    var projectId = ViewContext.RouteData.Values["id"]?.ToString();
 }
 
 <h1>Project Details</h1>
+
+<div class="mb-3">
+    <a asp-area="Org"
+       asp-controller="Invoices"
+       asp-action="Index"
+       asp-route-projectId="@projectId"
+       class="btn btn-outline-secondary">
+        Invoices
+    </a>
+
+    <a asp-area="Org"
+       asp-controller="Payments"
+       asp-action="Index"
+       asp-route-projectId="@projectId"
+       class="btn btn-outline-secondary">
+        Payments
+    </a>
+
+    <a asp-area="Org"
+       asp-controller="Discounts"
+       asp-action="Index"
+       asp-route-projectId="@projectId"
+       class="btn btn-outline-secondary">
+        Discounts
+    </a>
+</div>
 
 <div class="mt-4">
     <dl class="row">
@@ -15,13 +42,16 @@
         <dt class="col-sm-3">Total Paid</dt>
         <dd class="col-sm-9">@Model.TotalPaid</dd>
 
+        <dt class="col-sm-3">Total Discounted</dt>
+        <dd class="col-sm-9">@Model.TotalDiscounted</dd>
+
         <dt class="col-sm-3">Remaining Balance</dt>
         <dd class="col-sm-9">@Model.RemainingBalance</dd>
     </dl>
 </div>
 
 <form method="get" class="mt-4 mb-4">
-    <input type="hidden" name="id" value="@ViewContext.RouteData.Values["id"]" />
+    <input type="hidden" name="id" value="@projectId" />
 
     <div class="row g-3">
         <div class="col-md-3">
@@ -65,7 +95,7 @@
             <a asp-area="Org"
                asp-controller="Projects"
                asp-action="Details"
-               asp-route-id="@ViewContext.RouteData.Values["id"]"
+               asp-route-id="@projectId"
                class="btn btn-outline-secondary">
                 Clear
             </a>
