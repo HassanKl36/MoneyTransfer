@@ -2,5 +2,7 @@
 
 public interface ICurrentOrganization
 {
-    Guid? OrganizationId { get; }
+    Task<Guid?> GetOrganizationIdAsync(CancellationToken cancellationToken = default);
+
+    Task<Guid> GetRequiredOrganizationIdAsync(CancellationToken cancellationToken = default);
 }

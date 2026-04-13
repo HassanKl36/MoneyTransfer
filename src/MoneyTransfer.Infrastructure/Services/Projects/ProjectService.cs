@@ -30,7 +30,7 @@ public sealed class ProjectService : IProjectService
         ProjectStatus? status = null,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var query = _dbContext.Projects
             .AsNoTracking()
@@ -71,7 +71,7 @@ public sealed class ProjectService : IProjectService
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         return await _dbContext.Projects
             .AsNoTracking()
@@ -92,7 +92,7 @@ public sealed class ProjectService : IProjectService
         ProjectEditDto model,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var clientExists = await _dbContext.Clients
             .AnyAsync(c =>
@@ -130,7 +130,7 @@ public sealed class ProjectService : IProjectService
         ProjectEditDto model,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var project = await _dbContext.Projects
             .FirstOrDefaultAsync(
@@ -166,7 +166,7 @@ public sealed class ProjectService : IProjectService
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var project = await _dbContext.Projects
             .FirstOrDefaultAsync(
@@ -189,12 +189,5 @@ public sealed class ProjectService : IProjectService
         return _currentUser.UserId
             ?? throw new InvalidOperationException(
                 "Current user is not authenticated.");
-    }
-
-    private Guid GetRequiredOrganizationId()
-    {
-        return _currentOrganization.OrganizationId
-            ?? throw new InvalidOperationException(
-                "Current user is not associated with an organization.");
     }
 }

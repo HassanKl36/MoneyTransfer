@@ -30,7 +30,7 @@ public sealed class InvoiceService : IInvoiceService
         Guid projectId,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var projectExists = await _dbContext.Projects
             .AnyAsync(
@@ -65,7 +65,7 @@ public sealed class InvoiceService : IInvoiceService
         Guid projectId,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var projectExists = await _dbContext.Projects
             .AsNoTracking()
@@ -91,7 +91,7 @@ public sealed class InvoiceService : IInvoiceService
         InvoiceCreateDto dto,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var project = await _dbContext.Projects
             .AsNoTracking()
@@ -157,12 +157,5 @@ public sealed class InvoiceService : IInvoiceService
         return _currentUser.UserId
             ?? throw new InvalidOperationException(
                 "Current user is not authenticated.");
-    }
-
-    private Guid GetRequiredOrganizationId()
-    {
-        return _currentOrganization.OrganizationId
-            ?? throw new InvalidOperationException(
-                "Current user is not associated with an organization.");
     }
 }

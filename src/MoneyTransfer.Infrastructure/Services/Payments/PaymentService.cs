@@ -30,7 +30,7 @@ public sealed class PaymentService : IPaymentService
         Guid projectId,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var project = await _dbContext.Projects
             .AsNoTracking()
@@ -64,7 +64,7 @@ public sealed class PaymentService : IPaymentService
         Guid projectId,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var project = await _dbContext.Projects
             .AsNoTracking()
@@ -88,7 +88,7 @@ public sealed class PaymentService : IPaymentService
         PaymentCreateDto dto,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var project = await _dbContext.Projects
             .FirstOrDefaultAsync(
@@ -155,7 +155,7 @@ public sealed class PaymentService : IPaymentService
         Guid clientId,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var client = await _dbContext.Clients
             .AsNoTracking()
@@ -239,7 +239,7 @@ public sealed class PaymentService : IPaymentService
         ClientPaymentCreateDto dto,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
         var userId = GetRequiredUserId();
 
         var paymentMethod = NormalizeOptionalText(dto.PaymentMethod);
@@ -446,12 +446,5 @@ public sealed class PaymentService : IPaymentService
         return _currentUser.UserId
             ?? throw new InvalidOperationException(
                 "Current user is not authenticated.");
-    }
-
-    private Guid GetRequiredOrganizationId()
-    {
-        return _currentOrganization.OrganizationId
-            ?? throw new InvalidOperationException(
-                "Current user is not associated with an organization.");
     }
 }

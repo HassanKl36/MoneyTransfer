@@ -30,7 +30,7 @@ public sealed class DiscountService : IDiscountService
         Guid projectId,
         CancellationToken cancellationToken = default)
     {
-        var orgId = GetRequiredOrganizationId();
+        var orgId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var projectExists = await _dbContext.Projects
             .AnyAsync(x => x.Id == projectId && x.OrganizationId == orgId, cancellationToken);
@@ -61,7 +61,7 @@ public sealed class DiscountService : IDiscountService
         Guid projectId,
         CancellationToken cancellationToken = default)
     {
-        var orgId = GetRequiredOrganizationId();
+        var orgId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var exists = await _dbContext.Projects
             .AnyAsync(x => x.Id == projectId && x.OrganizationId == orgId, cancellationToken);
@@ -82,7 +82,7 @@ public sealed class DiscountService : IDiscountService
         DiscountCreateDto dto,
         CancellationToken cancellationToken = default)
     {
-        var orgId = GetRequiredOrganizationId();
+        var orgId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var project = await _dbContext.Projects
             .FirstOrDefaultAsync(x => x.Id == dto.ProjectId && x.OrganizationId == orgId, cancellationToken);
@@ -147,12 +147,6 @@ public sealed class DiscountService : IDiscountService
         _dbContext.LedgerEntries.Add(ledger);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private Guid GetRequiredOrganizationId()
-    {
-        return _currentOrganization.OrganizationId
-            ?? throw new InvalidOperationException("No organization.");
     }
 
     private string GetRequiredUserId()

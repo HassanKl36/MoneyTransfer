@@ -32,7 +32,7 @@ public sealed class ClientService : IClientService
         ClientStatus? status = null,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var query = _dbContext.Clients
             .AsNoTracking()
@@ -69,7 +69,7 @@ public sealed class ClientService : IClientService
         Guid clientId,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var client = await _dbContext.Clients
             .AsNoTracking()
@@ -136,7 +136,7 @@ public sealed class ClientService : IClientService
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var client = await _dbContext.Clients
             .AsNoTracking()
@@ -167,7 +167,7 @@ public sealed class ClientService : IClientService
         CancellationToken cancellationToken = default)
     {
         var errors = new List<string>();
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var client = new Domain.Entities.Client
         {
@@ -262,7 +262,7 @@ public sealed class ClientService : IClientService
         CancellationToken cancellationToken = default)
     {
         var errors = new List<string>();
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var client = await _dbContext.Clients
             .FirstOrDefaultAsync(
@@ -326,7 +326,7 @@ public sealed class ClientService : IClientService
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var client = await _dbContext.Clients
             .FirstOrDefaultAsync(
@@ -347,11 +347,5 @@ public sealed class ClientService : IClientService
     {
         return _currentUser.UserId
             ?? throw new InvalidOperationException("Current user is not authenticated.");
-    }
-
-    private Guid GetRequiredOrganizationId()
-    {
-        return _currentOrganization.OrganizationId
-            ?? throw new InvalidOperationException("Current user is not associated with an organization.");
     }
 }

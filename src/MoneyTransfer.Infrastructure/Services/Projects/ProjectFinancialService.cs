@@ -26,7 +26,7 @@ public sealed class ProjectFinancialService : IProjectFinancialService
         LedgerEntryType? transactionType = null,
         CancellationToken cancellationToken = default)
     {
-        var organizationId = GetRequiredOrganizationId();
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
         var projectExists = await _dbContext.Projects
             .AsNoTracking()
@@ -198,12 +198,5 @@ public sealed class ProjectFinancialService : IProjectFinancialService
         return string.IsNullOrWhiteSpace(remainingNotes)
             ? null
             : remainingNotes;
-    }
-
-    private Guid GetRequiredOrganizationId()
-    {
-        return _currentOrganization.OrganizationId
-            ?? throw new InvalidOperationException(
-                "Current user is not associated with an organization.");
     }
 }

@@ -22,7 +22,7 @@ public sealed class OrgUserService : IOrgUserService
     public async Task<IReadOnlyList<OrgUserListItemDto>> GetUsersAsync(
         CancellationToken cancellationToken = default)
     {
-        var organizationId = _currentOrganization.OrganizationId;
+        var organizationId = await _currentOrganization.GetOrganizationIdAsync(cancellationToken);
 
         if (organizationId is null)
         {
@@ -57,7 +57,7 @@ public sealed class OrgUserService : IOrgUserService
     {
         var errors = new List<string>();
 
-        var organizationId = _currentOrganization.OrganizationId;
+        var organizationId = await _currentOrganization.GetOrganizationIdAsync(cancellationToken);
 
         if (organizationId is null)
         {
