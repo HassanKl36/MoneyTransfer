@@ -1,5 +1,37 @@
-﻿<h2>Customer Portal</h2>
+﻿@model MoneyTransfer.Application.Services.Clients.ClientDetailsDto
+
+<h2>Customer Portal</h2>
 
 <p>
-    You are logged into the customer portal.
+    <strong>Total Balance:</strong> @Model.TotalBalance
+</p>
+
+<p>
+    <strong>As of:</strong> @Model.AsOfDate.ToString("dd/MM/yyyy HH:mm")
+</p>
+
+<h3>Projects</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Project</th>
+            <th>Code</th>
+            <th>Balance</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var project in Model.Projects)
+        {
+            <tr>
+                <td>@project.ProjectName</td>
+                <td>@project.ProjectCode</td>
+                <td>@project.Balance</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<p>
+    <a asp-action="Transactions">View Transactions</a>
 </p>

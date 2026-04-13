@@ -1,0 +1,77 @@
+﻿@model MoneyTransfer.Application.Services.Clients.ClientLedgerDetailsDto
+@using MoneyTransfer.Domain.Enums
+
+<h2>Transactions</h2>
+
+<p>
+    <strong>Total Balance:</strong> @Model.TotalBalance <br />
+    <strong>As of:</strong> @Model.AsOfDate
+</p>
+
+<form method="get" class="mb-3">
+    <div>
+        <label>From Date:</label>
+        <input type="date" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" />
+    </div>
+
+    <div>
+        <label>To Date:</label>
+        <input type="date" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" />
+    </div>
+
+    <div>
+        <label>Project:</label>
+        <select name="projectId">
+            <option value="">All</option>
+            @foreach (var p in Model.Projects)
+            {
+                <option value="@p.ProjectId" selected="@(Model.ProjectId == p.ProjectId)">
+                    @p.ProjectName
+                </option>
+            }
+        </select>
+    </div>
+
+    <div>
+        <label>Transaction Type:</label>
+        <select name="transactionType">
+            <option value="">All</option>
+            @foreach (var type in Enum.GetValues<LedgerEntryType>())
+            {
+                <option value="@type" selected="@(Model.TransactionType == type)">
+                    @type
+                </option>
+            }
+        </select>
+    </div>
+
+    <button type="submit">Filter</button>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Project</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Running Balance</th>
+            <th>Reference</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var entry in Model.Entries)
+        {
+            <tr>
+                <td>@entry.OccurredAt.ToString("dd/MM/yyyy")</td>
+                <td>@entry.ProjectName</td>
+                <td>@entry.Type</td>
+                <td>@entry.Amount</td>
+                <td>@entry.RunningBalance</td>
+                <td>@entry.Reference</td>
+                <td>@entry.Notes</td>
+            </tr>
+        }
+    </tbody>
+</table>

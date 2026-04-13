@@ -28,4 +28,14 @@ public interface IClientService
     Task<ClientDetailsDto?> GetDetailsAsync(
         Guid clientId,
         CancellationToken cancellationToken = default);
+
+    Task<ClientDetailsDto?> GetClientOverviewAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<ClientLedgerDetailsDto?> GetClientLedgerAsync(
+        DateTime? fromDate = null,
+        DateTime? toDate = null,
+        Guid? projectId = null,
+        LedgerEntryType? transactionType = null,
+        CancellationToken cancellationToken = default);
 }

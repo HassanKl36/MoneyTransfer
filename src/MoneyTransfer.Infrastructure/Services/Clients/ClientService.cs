@@ -13,17 +13,20 @@ public sealed class ClientService : IClientService
     private readonly MoneyTransferDbContext _dbContext;
     private readonly ICurrentOrganization _currentOrganization;
     private readonly ICurrentUser _currentUser;
+    private readonly ICurrentClient _currentClient;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public ClientService(
         MoneyTransferDbContext dbContext,
         ICurrentOrganization currentOrganization,
         ICurrentUser currentUser,
+        ICurrentClient currentClient,
         UserManager<ApplicationUser> userManager)
     {
         _dbContext = dbContext;
         _currentOrganization = currentOrganization;
         _currentUser = currentUser;
+        _currentClient = currentClient;
         _userManager = userManager;
     }
 
@@ -71,15 +74,49 @@ public sealed class ClientService : IClientService
     {
         var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
+        return await BuildClientOverviewAsync(
+            organizationId,
+            clientId,
+            includeArchived: true,
+            cancellationToken);
+    }
+
+    public async Task<ClientDetailsDto?> GetClientOverviewAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var clientId = _currentClient.ClientId
+            ?? throw new InvalidOperationException("Current customer client is not resolved.");
+
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
+
+        return await BuildClientOverviewAsync(
+            organizationId,
+            clientId,
+            includeArchived: false,
+            cancellationToken);
+    }
+
+    public async Task<ClientLedgerDetailsDto?> GetClientLedgerAsync(
+        DateTime? fromDate = null,
+        DateTime? toDate = null,
+        Guid? projectId = null,
+        LedgerEntryType? transactionType = null,
+        CancellationToken cancellationToken = default)
+    {
+        var clientId = _currentClient.ClientId
+            ?? throw new InvalidOperationException("Current customer client is not resolved.");
+
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
+
         var client = await _dbContext.Clients
             .AsNoTracking()
-            .Where(c => c.OrganizationId == organizationId && c.Id == clientId)
-            .Select(c => new ClientDetailsDto
+            .Where(c =>
+                c.Id == clientId &&
+                c.OrganizationId == organizationId &&
+                c.Status == ClientStatus.Active)
+            .Select(c => new
             {
-                Id = c.Id,
-                Name = c.Name,
-                PhoneNumber = c.PhoneNumber,
-                Email = c.Email
+                c.Id
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -88,48 +125,113 @@ public sealed class ClientService : IClientService
             return null;
         }
 
-        var projects = await _dbContext.Projects
-            .AsNoTracking()
-            .Where(p => p.OrganizationId == organizationId && p.ClientId == clientId)
-            .OrderBy(p => p.Name)
-            .Select(p => new ClientProjectBalanceDto
-            {
-                ProjectId = p.Id,
-                ProjectName = p.Name,
-                ProjectCode = p.Code,
-                Balance = 0m
-            })
-            .ToListAsync(cancellationToken);
-
-        var projectBalances = await _dbContext.LedgerEntries
+        var allEntries = await _dbContext.LedgerEntries
             .AsNoTracking()
             .Where(x =>
                 x.OrganizationId == organizationId &&
                 x.ClientId == clientId &&
                 !x.IsVoided)
-            .GroupBy(x => x.ProjectId)
-            .Select(g => new
+            .OrderBy(x => x.OccurredAt)
+            .ThenBy(x => x.CreatedAt)
+            .ThenBy(x => x.Id)
+            .Select(x => new
             {
-                ProjectId = g.Key,
-                Balance = g.Sum(x => x.Amount)
+                x.Id,
+                x.ProjectId,
+                ProjectName = x.Project != null ? x.Project.Name : string.Empty,
+                ProjectCode = x.Project != null ? x.Project.Code : null,
+                x.OccurredAt,
+                x.Type,
+                x.Amount,
+                x.InvoiceNumber,
+                x.Notes,
+                x.CreatedAt
             })
-            .ToDictionaryAsync(
-                x => x.ProjectId,
-                x => x.Balance,
-                cancellationToken);
+            .ToListAsync(cancellationToken);
 
-        foreach (var project in projects)
+        var runningBalance = 0m;
+        var historicalEntries = new List<ClientLedgerEntryDto>(allEntries.Count);
+
+        foreach (var entry in allEntries)
         {
-            if (projectBalances.TryGetValue(project.ProjectId, out var balance))
+            runningBalance += entry.Amount;
+
+            historicalEntries.Add(new ClientLedgerEntryDto
             {
-                project.Balance = balance;
-            }
+                ProjectId = entry.ProjectId,
+                ProjectName = entry.ProjectName,
+                ProjectCode = entry.ProjectCode,
+                OccurredAt = entry.OccurredAt,
+                Type = entry.Type,
+                Amount = entry.Amount,
+                RunningBalance = runningBalance,
+                Reference = entry.Type == LedgerEntryType.Invoice
+                    ? entry.InvoiceNumber
+                    : entry.Type == LedgerEntryType.Payment
+                        ? GetPaymentReference(entry.Notes)
+                        : entry.Type == LedgerEntryType.Discount
+                            ? GetDiscountReference(entry.Notes)
+                            : null,
+                Notes = entry.Type == LedgerEntryType.Payment
+                    ? GetPaymentNotes(entry.Notes)
+                    : entry.Type == LedgerEntryType.Discount
+                        ? GetDiscountNotes(entry.Notes)
+                        : entry.Notes
+            });
         }
 
-        client.Projects = projects;
-        client.TotalBalance = projects.Sum(x => x.Balance);
+        IEnumerable<ClientLedgerEntryDto> filteredEntries = historicalEntries;
 
-        return client;
+        if (fromDate.HasValue)
+        {
+            var fromDateValue = fromDate.Value.Date;
+            filteredEntries = filteredEntries.Where(x => x.OccurredAt >= fromDateValue);
+        }
+
+        if (toDate.HasValue)
+        {
+            var toDateExclusive = toDate.Value.Date.AddDays(1);
+            filteredEntries = filteredEntries.Where(x => x.OccurredAt < toDateExclusive);
+        }
+
+        if (projectId.HasValue)
+        {
+            filteredEntries = filteredEntries.Where(x => x.ProjectId == projectId.Value);
+        }
+
+        if (transactionType.HasValue)
+        {
+            filteredEntries = filteredEntries.Where(x => x.Type == transactionType.Value);
+        }
+
+        var displayEntries = filteredEntries
+            .OrderByDescending(x => x.OccurredAt)
+            .ThenByDescending(x => x.ProjectName)
+            .ThenByDescending(x => x.ProjectId)
+            .ToList();
+
+        var overview = await BuildClientOverviewAsync(
+            organizationId,
+            clientId,
+            includeArchived: false,
+            cancellationToken);
+
+        if (overview is null)
+        {
+            return null;
+        }
+
+        return new ClientLedgerDetailsDto
+        {
+            TotalBalance = overview.TotalBalance,
+            AsOfDate = DateTime.UtcNow,
+            FromDate = fromDate,
+            ToDate = toDate,
+            ProjectId = projectId,
+            TransactionType = transactionType,
+            Projects = overview.Projects,
+            Entries = displayEntries
+        };
     }
 
     public async Task<ClientEditDto?> GetForEditAsync(
@@ -341,6 +443,165 @@ public sealed class ClientService : IClientService
         client.Status = ClientStatus.Archived;
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    private async Task<ClientDetailsDto?> BuildClientOverviewAsync(
+        Guid organizationId,
+        Guid clientId,
+        bool includeArchived,
+        CancellationToken cancellationToken)
+    {
+        var clientQuery = _dbContext.Clients
+            .AsNoTracking()
+            .Where(c =>
+                c.OrganizationId == organizationId &&
+                c.Id == clientId);
+
+        if (!includeArchived)
+        {
+            clientQuery = clientQuery.Where(c => c.Status == ClientStatus.Active);
+        }
+
+        var client = await clientQuery
+            .Select(c => new ClientDetailsDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                PhoneNumber = c.PhoneNumber,
+                Email = c.Email,
+                AsOfDate = DateTime.UtcNow
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (client is null)
+        {
+            return null;
+        }
+
+        var projects = await _dbContext.Projects
+            .AsNoTracking()
+            .Where(p =>
+                p.OrganizationId == organizationId &&
+                p.ClientId == clientId)
+            .OrderBy(p => p.Name)
+            .Select(p => new ClientProjectBalanceDto
+            {
+                ProjectId = p.Id,
+                ProjectName = p.Name,
+                ProjectCode = p.Code,
+                Balance = 0m
+            })
+            .ToListAsync(cancellationToken);
+
+        var projectBalances = await _dbContext.LedgerEntries
+            .AsNoTracking()
+            .Where(x =>
+                x.OrganizationId == organizationId &&
+                x.ClientId == clientId &&
+                !x.IsVoided)
+            .GroupBy(x => x.ProjectId)
+            .Select(g => new
+            {
+                ProjectId = g.Key,
+                Balance = g.Sum(x => x.Amount)
+            })
+            .ToDictionaryAsync(
+                x => x.ProjectId,
+                x => x.Balance,
+                cancellationToken);
+
+        foreach (var project in projects)
+        {
+            if (projectBalances.TryGetValue(project.ProjectId, out var balance))
+            {
+                project.Balance = balance;
+            }
+        }
+
+        client.Projects = projects;
+        client.TotalBalance = projects.Sum(x => x.Balance);
+
+        return client;
+    }
+
+    private static string? GetPaymentReference(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes))
+        {
+            return null;
+        }
+
+        var firstSegment = notes.Split('|', 2)[0].Trim();
+
+        const string prefix = "Payment Ref:";
+
+        if (firstSegment.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return firstSegment[prefix.Length..].Trim();
+        }
+
+        return firstSegment;
+    }
+
+    private static string? GetPaymentNotes(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes))
+        {
+            return null;
+        }
+
+        var parts = notes.Split('|', 2);
+
+        if (parts.Length < 2)
+        {
+            return null;
+        }
+
+        var remainingNotes = parts[1].Trim();
+
+        return string.IsNullOrWhiteSpace(remainingNotes)
+            ? null
+            : remainingNotes;
+    }
+
+    private static string? GetDiscountReference(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes))
+        {
+            return null;
+        }
+
+        var firstSegment = notes.Split('|', 2)[0].Trim();
+
+        const string prefix = "Discount Ref:";
+
+        if (firstSegment.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return firstSegment[prefix.Length..].Trim();
+        }
+
+        return firstSegment;
+    }
+
+    private static string? GetDiscountNotes(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes))
+        {
+            return null;
+        }
+
+        var parts = notes.Split('|', 2);
+
+        if (parts.Length < 2)
+        {
+            return null;
+        }
+
+        var remainingNotes = parts[1].Trim();
+
+        return string.IsNullOrWhiteSpace(remainingNotes)
+            ? null
+            : remainingNotes;
     }
 
     private string GetRequiredUserId()

@@ -12,6 +12,8 @@ public sealed class ClientDetailsDto
 
     public decimal TotalBalance { get; set; }
 
+    public DateTime AsOfDate { get; set; }
+
     public IReadOnlyList<ClientProjectBalanceDto> Projects { get; set; }
         = Array.Empty<ClientProjectBalanceDto>();
 }
