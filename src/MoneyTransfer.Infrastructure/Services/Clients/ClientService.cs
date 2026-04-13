@@ -212,7 +212,7 @@ public sealed class ClientService : IClientService
                     return (false, errors);
                 }
 
-                var existingUser = await _userManager.FindByNameAsync(model.PortalUsername);
+                var existingUser = await _userManager.FindByNameAsync(model.PortalUsername!);
                 if (existingUser is not null)
                 {
                     errors.Add("A user with this username already exists.");
@@ -228,7 +228,7 @@ public sealed class ClientService : IClientService
                     OrganizationId = client.OrganizationId
                 };
 
-                var createResult = await _userManager.CreateAsync(user, model.PortalPassword);
+                var createResult = await _userManager.CreateAsync(user, model.PortalPassword!);
 
                 if (!createResult.Succeeded)
                 {
@@ -301,7 +301,7 @@ public sealed class ClientService : IClientService
                 OrganizationId = client.OrganizationId
             };
 
-            var createResult = await _userManager.CreateAsync(user, model.PortalPassword);
+            var createResult = await _userManager.CreateAsync(user, model.PortalPassword!);
 
             if (!createResult.Succeeded)
             {
