@@ -27,10 +27,8 @@ public sealed class MoneyTransferDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(modelBuilder);
 
-        // Explicit configurations live in this assembly:
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(MoneyTransferDbContext).Assembly);
 
-        // Identity user tenant hooks (optional FKs)
         modelBuilder.Entity<ApplicationUser>(b =>
         {
             b.HasOne(u => u.Organization)
@@ -44,7 +42,10 @@ public sealed class MoneyTransferDbContext : IdentityDbContext<ApplicationUser>
              .OnDelete(DeleteBehavior.Restrict);
 
             b.HasIndex(u => u.OrganizationId);
-            b.HasIndex(u => u.ClientId);
+
+            b.HasIndex(u => u.ClientId)
+             .IsUnique()
+             .HasFilter("[ClientId] IS NOT NULL");
         });
     }
 }

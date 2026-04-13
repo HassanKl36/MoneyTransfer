@@ -20,4 +20,18 @@ public sealed class ClientEditDto
     public string? Email { get; set; }
 
     public ClientStatus Status { get; set; } = ClientStatus.Active;
+
+    public bool CreatePortalAccount { get; set; }
+
+    [StringLength(256)]
+    public string? PortalUsername { get; set; }
+
+    [DataType(DataType.Password)]
+    public string? PortalPassword { get; set; }
+
+    [DataType(DataType.Password)]
+    [Compare(nameof(PortalPassword), ErrorMessage = "Password and confirmation password do not match.")]
+    public string? ConfirmPortalPassword { get; set; }
+
+    public bool HasPortalAccount { get; set; }
 }

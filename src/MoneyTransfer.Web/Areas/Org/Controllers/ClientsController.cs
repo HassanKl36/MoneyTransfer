@@ -49,7 +49,11 @@ public class ClientsController : Controller
     [HttpGet]
     public IActionResult Create()
     {
-        return View(new ClientEditDto());
+        return View(new ClientEditDto
+        {
+            CreatePortalAccount = false,
+            HasPortalAccount = false
+        });
     }
 
     [HttpPost]
@@ -61,7 +65,18 @@ public class ClientsController : Controller
             return View(model);
         }
 
-        await _clientService.CreateAsync(model, cancellationToken);
+        var result = await _clientService.CreateAsync(model, cancellationToken);
+
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+
+            return View(model);
+        }
+
         return RedirectToAction(nameof(Index));
     }
 
@@ -87,11 +102,21 @@ public class ClientsController : Controller
             return View(model);
         }
 
-        var updated = await _clientService.UpdateAsync(model, cancellationToken);
+        var result = await _clientService.UpdateAsync(model, cancellationToken);
 
-        if (!updated)
+        if (!result.Succeeded)
         {
-            return NotFound();
+            if (!result.Errors.Any())
+            {
+                return NotFound();
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+
+            return View(model);
         }
 
         return RedirectToAction(nameof(Index));

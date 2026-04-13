@@ -1,8 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using MoneyTransfer.Application.Common.Interfaces;
 using MoneyTransfer.Application.Services.Clients;
 using MoneyTransfer.Domain.Enums;
 using MoneyTransfer.Infrastructure.Data;
+using MoneyTransfer.Infrastructure.Identity;
 
 namespace MoneyTransfer.Infrastructure.Services.Clients;
 
@@ -11,15 +13,18 @@ public sealed class ClientService : IClientService
     private readonly MoneyTransferDbContext _dbContext;
     private readonly ICurrentOrganization _currentOrganization;
     private readonly ICurrentUser _currentUser;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public ClientService(
         MoneyTransferDbContext dbContext,
         ICurrentOrganization currentOrganization,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        UserManager<ApplicationUser> userManager)
     {
         _dbContext = dbContext;
         _currentOrganization = currentOrganization;
         _currentUser = currentUser;
+        _userManager = userManager;
     }
 
     public async Task<IReadOnlyList<ClientListItemDto>> GetClientsAsync(
@@ -133,7 +138,7 @@ public sealed class ClientService : IClientService
     {
         var organizationId = GetRequiredOrganizationId();
 
-        return await _dbContext.Clients
+        var client = await _dbContext.Clients
             .AsNoTracking()
             .Where(c => c.OrganizationId == organizationId && c.Id == id)
             .Select(c => new ClientEditDto
@@ -145,12 +150,23 @@ public sealed class ClientService : IClientService
                 Status = c.Status
             })
             .FirstOrDefaultAsync(cancellationToken);
+
+        if (client is null)
+        {
+            return null;
+        }
+
+        client.HasPortalAccount = await _dbContext.Users
+            .AnyAsync(u => u.ClientId == id, cancellationToken);
+
+        return client;
     }
 
-    public async Task CreateAsync(
+    public async Task<(bool Succeeded, List<string> Errors)> CreateAsync(
         ClientEditDto model,
         CancellationToken cancellationToken = default)
     {
+        var errors = new List<string>();
         var organizationId = GetRequiredOrganizationId();
 
         var client = new Domain.Entities.Client
@@ -165,14 +181,87 @@ public sealed class ClientService : IClientService
             CreatedBy = GetRequiredUserId()
         };
 
-        _dbContext.Clients.Add(client);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            _dbContext.Clients.Add(client);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            if (model.CreatePortalAccount)
+            {
+                var hasExistingUser = await _dbContext.Users
+                    .AnyAsync(u => u.ClientId == client.Id, cancellationToken);
+
+                if (hasExistingUser)
+                {
+                    errors.Add("This client already has a portal account.");
+                    await transaction.RollbackAsync(cancellationToken);
+                    return (false, errors);
+                }
+
+                if (string.IsNullOrWhiteSpace(model.PortalUsername))
+                    errors.Add("Username is required.");
+
+                if (string.IsNullOrWhiteSpace(model.PortalPassword))
+                    errors.Add("Password is required.");
+
+                if (errors.Count > 0)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return (false, errors);
+                }
+
+                var existingUser = await _userManager.FindByNameAsync(model.PortalUsername);
+                if (existingUser is not null)
+                {
+                    errors.Add("A user with this username already exists.");
+                    await transaction.RollbackAsync(cancellationToken);
+                    return (false, errors);
+                }
+
+                var user = new ApplicationUser
+                {
+                    UserName = model.PortalUsername,
+                    Email = model.PortalUsername,
+                    ClientId = client.Id,
+                    OrganizationId = client.OrganizationId
+                };
+
+                var createResult = await _userManager.CreateAsync(user, model.PortalPassword);
+
+                if (!createResult.Succeeded)
+                {
+                    errors.AddRange(createResult.Errors.Select(e => e.Description));
+                    await transaction.RollbackAsync(cancellationToken);
+                    return (false, errors);
+                }
+
+                var roleResult = await _userManager.AddToRoleAsync(user, "Customer");
+
+                if (!roleResult.Succeeded)
+                {
+                    errors.AddRange(roleResult.Errors.Select(e => e.Description));
+                    await transaction.RollbackAsync(cancellationToken);
+                    return (false, errors);
+                }
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            return (true, errors);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 
-    public async Task<bool> UpdateAsync(
+    public async Task<(bool Succeeded, List<string> Errors)> UpdateAsync(
         ClientEditDto model,
         CancellationToken cancellationToken = default)
     {
+        var errors = new List<string>();
         var organizationId = GetRequiredOrganizationId();
 
         var client = await _dbContext.Clients
@@ -182,7 +271,7 @@ public sealed class ClientService : IClientService
 
         if (client is null)
         {
-            return false;
+            return (false, errors);
         }
 
         client.Name = model.Name.Trim();
@@ -190,8 +279,47 @@ public sealed class ClientService : IClientService
         client.Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim();
         client.Status = model.Status;
 
+        var hasExistingUser = await _dbContext.Users
+            .AnyAsync(u => u.ClientId == client.Id, cancellationToken);
+
+        if (model.CreatePortalAccount && !hasExistingUser)
+        {
+            if (string.IsNullOrWhiteSpace(model.PortalUsername))
+                errors.Add("Username is required.");
+
+            if (string.IsNullOrWhiteSpace(model.PortalPassword))
+                errors.Add("Password is required.");
+
+            if (errors.Count > 0)
+                return (false, errors);
+
+            var user = new ApplicationUser
+            {
+                UserName = model.PortalUsername,
+                Email = model.PortalUsername,
+                ClientId = client.Id,
+                OrganizationId = client.OrganizationId
+            };
+
+            var createResult = await _userManager.CreateAsync(user, model.PortalPassword);
+
+            if (!createResult.Succeeded)
+            {
+                errors.AddRange(createResult.Errors.Select(e => e.Description));
+                return (false, errors);
+            }
+
+            var roleResult = await _userManager.AddToRoleAsync(user, "Customer");
+
+            if (!roleResult.Succeeded)
+            {
+                errors.AddRange(roleResult.Errors.Select(e => e.Description));
+                return (false, errors);
+            }
+        }
+
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return true;
+        return (true, errors);
     }
 
     public async Task<bool> ArchiveAsync(
@@ -211,7 +339,6 @@ public sealed class ClientService : IClientService
         }
 
         client.Status = ClientStatus.Archived;
-
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
     }
@@ -219,14 +346,12 @@ public sealed class ClientService : IClientService
     private string GetRequiredUserId()
     {
         return _currentUser.UserId
-            ?? throw new InvalidOperationException(
-                "Current user is not authenticated.");
+            ?? throw new InvalidOperationException("Current user is not authenticated.");
     }
 
     private Guid GetRequiredOrganizationId()
     {
         return _currentOrganization.OrganizationId
-            ?? throw new InvalidOperationException(
-                "Current user is not associated with an organization.");
+            ?? throw new InvalidOperationException("Current user is not associated with an organization.");
     }
 }

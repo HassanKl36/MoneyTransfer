@@ -8,20 +8,24 @@ public interface IClientService
         string? search = null,
         ClientStatus? status = null,
         CancellationToken cancellationToken = default);
+
     Task<ClientEditDto?> GetForEditAsync(
-        Guid id, 
+        Guid id,
         CancellationToken cancellationToken = default);
 
-    Task CreateAsync(
-        ClientEditDto model, 
+    Task<(bool Succeeded, List<string> Errors)> CreateAsync(
+        ClientEditDto model,
         CancellationToken cancellationToken = default);
-    Task<bool> UpdateAsync(
-        ClientEditDto model, 
+
+    Task<(bool Succeeded, List<string> Errors)> UpdateAsync(
+        ClientEditDto model,
         CancellationToken cancellationToken = default);
+
     Task<bool> ArchiveAsync(
-        Guid id, 
+        Guid id,
         CancellationToken cancellationToken = default);
+
     Task<ClientDetailsDto?> GetDetailsAsync(
-    Guid clientId,
-    CancellationToken cancellationToken = default);
+        Guid clientId,
+        CancellationToken cancellationToken = default);
 }
