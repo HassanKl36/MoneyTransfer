@@ -9,17 +9,25 @@ public sealed class CurrentOrganization : ICurrentOrganization
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IRequestContextOverride _requestContextOverride;
 
     public CurrentOrganization(
         IHttpContextAccessor httpContextAccessor,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        IRequestContextOverride requestContextOverride)
     {
         _httpContextAccessor = httpContextAccessor;
         _userManager = userManager;
+        _requestContextOverride = requestContextOverride;
     }
 
     public async Task<Guid?> GetOrganizationIdAsync(CancellationToken cancellationToken = default)
     {
+        if (_requestContextOverride.OrganizationId.HasValue)
+        {
+            return _requestContextOverride.OrganizationId.Value;
+        }
+
         var user = _httpContextAccessor.HttpContext?.User;
 
         var claimValue = user?.FindFirstValue("organization_id");

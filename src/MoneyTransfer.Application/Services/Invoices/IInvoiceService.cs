@@ -10,7 +10,7 @@ public interface IInvoiceService
         Guid projectId,
         CancellationToken cancellationToken = default);
 
-    Task CreateAsync(
-        InvoiceCreateDto dto, 
+    Task<InvoiceCreateResultDto> CreateAsync(
+        InvoiceCreateDto dto,
         CancellationToken cancellationToken = default);
 }

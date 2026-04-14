@@ -21,6 +21,7 @@ using MoneyTransfer.Infrastructure.Services.Discounts;
 using MoneyTransfer.Infrastructure.Services.Exports;
 using MoneyTransfer.Web.Infrastructure;
 using MoneyTransfer.Web.Services;
+using MoneyTransfer.Application.Common.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,6 +64,13 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.Configure<ApiKeyOptions>(
+    builder.Configuration.GetSection(ApiKeyOptions.SectionName));
+
+builder.Services.AddScoped<IRequestContextOverride, RequestContextOverride>();
+builder.Services.AddScoped<IApiKeyHasher, ApiKeyHasher>();
+
 builder.Services.AddScoped<ICurrentOrganization, CurrentOrganization>();
 builder.Services.AddScoped<ICurrentClient, CurrentClient>();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();

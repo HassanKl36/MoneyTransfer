@@ -84,7 +84,7 @@ public sealed class PaymentService : IPaymentService
         };
     }
 
-    public async Task CreateAsync(
+    public async Task<PaymentCreateResultDto> CreateAsync(
         PaymentCreateDto dto,
         CancellationToken cancellationToken = default)
     {
@@ -149,6 +149,12 @@ public sealed class PaymentService : IPaymentService
         _dbContext.LedgerEntries.Add(ledgerEntry);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return new PaymentCreateResultDto
+        {
+            Id = payment.Id,
+            PaymentReference = payment.PaymentReference
+        };
     }
 
     public async Task<ClientPaymentCreateDto> InitializeClientAllocationCreateAsync(
@@ -235,7 +241,7 @@ public sealed class PaymentService : IPaymentService
         };
     }
 
-    public async Task CreateClientAllocationAsync(
+    public async Task<ClientPaymentCreateResultDto> CreateClientAllocationAsync(
         ClientPaymentCreateDto dto,
         CancellationToken cancellationToken = default)
     {
@@ -409,6 +415,15 @@ public sealed class PaymentService : IPaymentService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+
+        return new ClientPaymentCreateResultDto
+        {
+            HeaderId = header.Id,
+            PaymentReference = header.PaymentReference,
+            PaymentIds = paymentEntities
+                .Select(x => x.Id)
+                .ToList()
+        };
     }
 
     private static string? NormalizeOptionalText(string? value)

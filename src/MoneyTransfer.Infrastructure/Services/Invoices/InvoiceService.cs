@@ -87,7 +87,7 @@ public sealed class InvoiceService : IInvoiceService
         };
     }
 
-    public async Task CreateAsync(
+    public async Task<InvoiceCreateResultDto> CreateAsync(
         InvoiceCreateDto dto,
         CancellationToken cancellationToken = default)
     {
@@ -150,6 +150,12 @@ public sealed class InvoiceService : IInvoiceService
         _dbContext.LedgerEntries.Add(ledgerEntry);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return new InvoiceCreateResultDto
+        {
+            Id = invoice.Id,
+            InvoiceNumber = invoice.InvoiceNumber
+        };
     }
 
     private string GetRequiredUserId()

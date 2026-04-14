@@ -22,6 +22,7 @@ public sealed class MoneyTransferDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Discount> Discounts => Set<Discount>();
     public DbSet<ClientPaymentHeader> ClientPaymentHeaders => Set<ClientPaymentHeader>();
     public DbSet<ClientPaymentAllocation> ClientPaymentAllocations => Set<ClientPaymentAllocation>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
