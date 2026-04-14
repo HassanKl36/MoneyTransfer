@@ -22,6 +22,60 @@
     </dl>
 </div>
 
+<h2>Statement Export</h2>
+
+<p class="text-muted">
+    Filters apply only to exported statements. This page does not display transactions.
+</p>
+
+<form method="get" class="mb-4">
+    <input type="hidden" name="id" value="@Model.Id" />
+
+    <div class="mb-2">
+        <label for="fromDate">From</label>
+        <input id="fromDate" name="fromDate" type="date" class="form-control" />
+    </div>
+
+    <div class="mb-2">
+        <label for="toDate">To</label>
+        <input id="toDate" name="toDate" type="date" class="form-control" />
+    </div>
+
+    <div class="mb-2">
+        <label for="projectId">Project</label>
+        <select id="projectId" name="projectId" class="form-select">
+            <option value="">All</option>
+            @foreach (var project in Model.Projects)
+            {
+                <option value="@project.ProjectId">@project.ProjectName</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="transactionType">Transaction Type</label>
+        <select id="transactionType" name="transactionType" class="form-select">
+            <option value="">All</option>
+            @foreach (var type in Enum.GetValues<MoneyTransfer.Domain.Enums.LedgerEntryType>())
+            {
+                <option value="@type">@type</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit"
+            formaction="@Url.Action("ExportPdf", "Clients", new { area = "Org" })"
+            class="btn btn-secondary">
+        Export PDF
+    </button>
+
+    <button type="submit"
+            formaction="@Url.Action("ExportExcel", "Clients", new { area = "Org" })"
+            class="btn btn-secondary">
+        Export Excel
+    </button>
+</form>
+
 <h2>Projects</h2>
 
 @if (Model.Projects.Count == 0)

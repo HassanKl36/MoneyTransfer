@@ -48,6 +48,26 @@
     <button type="submit">Filter</button>
 </form>
 
+<div class="mb-3">
+    <a asp-action="ExportPdf"
+       asp-route-fromDate="@Model.FromDate"
+       asp-route-toDate="@Model.ToDate"
+       asp-route-projectId="@Model.ProjectId"
+       asp-route-transactionType="@Model.TransactionType"
+       class="btn btn-secondary">
+        Export PDF
+    </a>
+
+    <a asp-action="ExportExcel"
+       asp-route-fromDate="@Model.FromDate"
+       asp-route-toDate="@Model.ToDate"
+       asp-route-projectId="@Model.ProjectId"
+       asp-route-transactionType="@Model.TransactionType"
+       class="btn btn-secondary">
+        Export Excel
+    </a>
+</div>
+
 <table class="table">
     <thead>
         <tr>

@@ -445,6 +445,184 @@ public sealed class ClientService : IClientService
         return true;
     }
 
+    public async Task<ClientStatementDto?> GetClientStatementAsync(
+        DateTime? fromDate = null,
+        DateTime? toDate = null,
+        Guid? projectId = null,
+        LedgerEntryType? transactionType = null,
+        CancellationToken cancellationToken = default)
+    {
+        var clientId = _currentClient.ClientId
+            ?? throw new InvalidOperationException("Current customer client is not resolved.");
+
+        return await BuildStatementAsync(
+            clientId,
+            fromDate,
+            toDate,
+            projectId,
+            transactionType,
+            cancellationToken);
+    }
+
+    public async Task<ClientStatementDto?> GetClientStatementForOrgAsync(
+        Guid clientId,
+        DateTime? fromDate = null,
+        DateTime? toDate = null,
+        Guid? projectId = null,
+        LedgerEntryType? transactionType = null,
+        CancellationToken cancellationToken = default)
+    {
+        return await BuildStatementAsync(
+            clientId,
+            fromDate,
+            toDate,
+            projectId,
+            transactionType,
+            cancellationToken);
+    }
+
+    private async Task<ClientStatementDto?> BuildStatementAsync(
+        Guid clientId,
+        DateTime? fromDate,
+        DateTime? toDate,
+        Guid? projectId,
+        LedgerEntryType? transactionType,
+        CancellationToken cancellationToken)
+    {
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
+
+        var client = await _dbContext.Clients
+            .AsNoTracking()
+            .Where(c => c.Id == clientId && c.OrganizationId == organizationId)
+            .Select(c => new { c.Id, c.Name })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (client is null)
+            return null;
+
+        var baseQuery = _dbContext.LedgerEntries
+            .AsNoTracking()
+            .Where(x =>
+                x.OrganizationId == organizationId &&
+                x.ClientId == clientId &&
+                !x.IsVoided);
+
+        if (projectId.HasValue)
+            baseQuery = baseQuery.Where(x => x.ProjectId == projectId.Value);
+
+        if (transactionType.HasValue)
+            baseQuery = baseQuery.Where(x => x.Type == transactionType.Value);
+
+        decimal openingBalance = 0m;
+
+        if (fromDate.HasValue)
+        {
+            var from = fromDate.Value.Date;
+
+            openingBalance = await baseQuery
+                .Where(x => x.OccurredAt < from)
+                .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
+        }
+
+        var rangeQuery = baseQuery;
+
+        if (fromDate.HasValue)
+        {
+            var from = fromDate.Value.Date;
+            rangeQuery = rangeQuery.Where(x => x.OccurredAt >= from);
+        }
+
+        if (toDate.HasValue)
+        {
+            var toExclusive = toDate.Value.Date.AddDays(1);
+            rangeQuery = rangeQuery.Where(x => x.OccurredAt < toExclusive);
+        }
+
+        var entriesRaw = await rangeQuery
+            .OrderBy(x => x.OccurredAt)
+            .ThenBy(x => x.CreatedAt)
+            .ThenBy(x => x.Id)
+            .Select(x => new
+            {
+                x.ProjectId,
+                ProjectName = x.Project != null ? x.Project.Name : string.Empty,
+                ProjectCode = x.Project != null ? x.Project.Code : null,
+                x.OccurredAt,
+                x.Type,
+                x.Amount,
+                x.InvoiceNumber,
+                x.Notes
+            })
+            .ToListAsync(cancellationToken);
+
+        var runningBalance = openingBalance;
+        var entries = new List<ClientStatementEntryDto>(entriesRaw.Count);
+
+        foreach (var e in entriesRaw)
+        {
+            runningBalance += e.Amount;
+
+            entries.Add(new ClientStatementEntryDto
+            {
+                ProjectId = e.ProjectId,
+                ProjectName = e.ProjectName,
+                ProjectCode = e.ProjectCode,
+                OccurredAt = e.OccurredAt,
+                Type = e.Type,
+                Amount = e.Amount,
+                RunningBalance = runningBalance,
+                Reference = e.Type == LedgerEntryType.Invoice
+                    ? e.InvoiceNumber
+                    : e.Type == LedgerEntryType.Payment
+                        ? GetPaymentReference(e.Notes)
+                        : e.Type == LedgerEntryType.Discount
+                            ? GetDiscountReference(e.Notes)
+                            : null,
+                Notes = e.Type == LedgerEntryType.Payment
+                    ? GetPaymentNotes(e.Notes)
+                    : e.Type == LedgerEntryType.Discount
+                        ? GetDiscountNotes(e.Notes)
+                        : e.Notes
+            });
+        }
+
+        var totalInvoices = entries
+            .Where(x => x.Type == LedgerEntryType.Invoice)
+            .Sum(x => x.Amount);
+
+        var totalPayments = entries
+            .Where(x => x.Type == LedgerEntryType.Payment)
+            .Sum(x => x.Amount);
+
+        var totalDiscounts = entries
+            .Where(x => x.Type == LedgerEntryType.Discount)
+            .Sum(x => x.Amount);
+
+        var netChange = entries.Sum(x => x.Amount);
+        var closingBalance = openingBalance + netChange;
+
+        return new ClientStatementDto
+        {
+            ClientId = client.Id,
+            ClientName = client.Name,
+            AsOfDate = DateTime.UtcNow,
+            FromDate = fromDate,
+            ToDate = toDate,
+            ProjectId = projectId,
+            TransactionType = transactionType,
+            Summary = new ClientStatementSummaryDto
+            {
+                OpeningBalance = openingBalance,
+                TotalInvoices = totalInvoices,
+                TotalPayments = totalPayments,
+                TotalDiscounts = totalDiscounts,
+                NetChange = netChange,
+                ClosingBalance = closingBalance
+            },
+            Entries = entries
+        };
+    }
+
     private async Task<ClientDetailsDto?> BuildClientOverviewAsync(
         Guid organizationId,
         Guid clientId,

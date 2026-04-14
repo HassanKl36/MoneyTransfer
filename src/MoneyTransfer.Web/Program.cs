@@ -18,6 +18,7 @@ using MoneyTransfer.Infrastructure.Services.OrgUsers;
 using MoneyTransfer.Infrastructure.Services.Payments;
 using MoneyTransfer.Infrastructure.Services.Projects;
 using MoneyTransfer.Infrastructure.Services.Discounts;
+using MoneyTransfer.Infrastructure.Services.Exports;
 using MoneyTransfer.Web.Infrastructure;
 using MoneyTransfer.Web.Services;
 
@@ -74,6 +75,8 @@ builder.Services.AddScoped<IFinancialIdentityGenerator, FinancialIdentityGenerat
 builder.Services.AddScoped<IProjectFinancialService, ProjectFinancialService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IOrgUserService, OrgUserService>();
+builder.Services.AddScoped<IStatementPdfRenderer, StatementPdfRenderer>();
+builder.Services.AddScoped<IStatementExcelRenderer, StatementExcelRenderer>();
 
 var app = builder.Build();
 

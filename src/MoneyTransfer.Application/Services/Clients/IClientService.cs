@@ -38,4 +38,19 @@ public interface IClientService
         Guid? projectId = null,
         LedgerEntryType? transactionType = null,
         CancellationToken cancellationToken = default);
+
+    Task<ClientStatementDto?> GetClientStatementAsync(
+        DateTime? fromDate = null,
+        DateTime? toDate = null,
+        Guid? projectId = null,
+        LedgerEntryType? transactionType = null,
+        CancellationToken cancellationToken = default);
+
+    Task<ClientStatementDto?> GetClientStatementForOrgAsync(
+        Guid clientId,
+        DateTime? fromDate = null,
+        DateTime? toDate = null,
+        Guid? projectId = null,
+        LedgerEntryType? transactionType = null,
+        CancellationToken cancellationToken = default);
 }

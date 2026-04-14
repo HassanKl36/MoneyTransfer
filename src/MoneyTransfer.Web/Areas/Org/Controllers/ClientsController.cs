@@ -10,10 +10,17 @@ namespace MoneyTransfer.Web.Areas.Org.Controllers;
 public class ClientsController : Controller
 {
     private readonly IClientService _clientService;
+    private readonly IStatementPdfRenderer _pdfRenderer;
+    private readonly IStatementExcelRenderer _excelRenderer;
 
-    public ClientsController(IClientService clientService)
+    public ClientsController(
+        IClientService clientService,
+        IStatementPdfRenderer pdfRenderer,
+        IStatementExcelRenderer excelRenderer)
     {
         _clientService = clientService;
+        _pdfRenderer = pdfRenderer;
+        _excelRenderer = excelRenderer;
     }
 
     [HttpGet]
@@ -44,6 +51,65 @@ public class ClientsController : Controller
         }
 
         return View(client);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportPdf(
+        Guid id,
+        DateTime? fromDate,
+        DateTime? toDate,
+        Guid? projectId,
+        LedgerEntryType? transactionType,
+        CancellationToken cancellationToken)
+    {
+        var statement = await _clientService.GetClientStatementForOrgAsync(
+            id,
+            fromDate,
+            toDate,
+            projectId,
+            transactionType,
+            cancellationToken);
+
+        if (statement is null)
+        {
+            return NotFound();
+        }
+
+        var bytes = _pdfRenderer.Render(statement);
+        var fileName = $"Statement_{statement.ClientName}_{fromDate:yyyyMMdd}_{toDate:yyyyMMdd}.pdf";
+
+        return File(bytes, "application/pdf", fileName);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportExcel(
+        Guid id,
+        DateTime? fromDate,
+        DateTime? toDate,
+        Guid? projectId,
+        LedgerEntryType? transactionType,
+        CancellationToken cancellationToken)
+    {
+        var statement = await _clientService.GetClientStatementForOrgAsync(
+            id,
+            fromDate,
+            toDate,
+            projectId,
+            transactionType,
+            cancellationToken);
+
+        if (statement is null)
+        {
+            return NotFound();
+        }
+
+        var bytes = _excelRenderer.Render(statement);
+        var fileName = $"Statement_{statement.ClientName}_{fromDate:yyyyMMdd}_{toDate:yyyyMMdd}.xlsx";
+
+        return File(
+            bytes,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            fileName);
     }
 
     [HttpGet]
