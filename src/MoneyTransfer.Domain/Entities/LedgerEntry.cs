@@ -35,6 +35,16 @@ public sealed class LedgerEntry
     /// </summary>
     public string? InvoiceNumber { get; set; }
 
+    /// <summary>
+    /// Nullable; only meaningful for Payment entries.
+    /// </summary>
+    public string? PaymentReference { get; set; }
+
+    /// <summary>
+    /// Nullable; only meaningful for Discount entries.
+    /// </summary>
+    public string? DiscountReference { get; set; }
+
     public bool IsVoided { get; set; }
     public DateTime? VoidedAt { get; set; }
 

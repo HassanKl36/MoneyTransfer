@@ -144,6 +144,8 @@ public sealed class ClientService : IClientService
                 x.Type,
                 x.Amount,
                 x.InvoiceNumber,
+                x.PaymentReference,
+                x.DiscountReference,
                 x.Notes,
                 x.CreatedAt
             })
@@ -168,15 +170,11 @@ public sealed class ClientService : IClientService
                 Reference = entry.Type == LedgerEntryType.Invoice
                     ? entry.InvoiceNumber
                     : entry.Type == LedgerEntryType.Payment
-                        ? GetPaymentReference(entry.Notes)
+                        ? entry.PaymentReference
                         : entry.Type == LedgerEntryType.Discount
-                            ? GetDiscountReference(entry.Notes)
+                            ? entry.DiscountReference
                             : null,
-                Notes = entry.Type == LedgerEntryType.Payment
-                    ? GetPaymentNotes(entry.Notes)
-                    : entry.Type == LedgerEntryType.Discount
-                        ? GetDiscountNotes(entry.Notes)
-                        : entry.Notes
+                Notes = entry.Notes
             });
         }
 
@@ -551,6 +549,8 @@ public sealed class ClientService : IClientService
                 x.Type,
                 x.Amount,
                 x.InvoiceNumber,
+                x.PaymentReference,
+                x.DiscountReference,
                 x.Notes
             })
             .ToListAsync(cancellationToken);
@@ -574,15 +574,11 @@ public sealed class ClientService : IClientService
                 Reference = e.Type == LedgerEntryType.Invoice
                     ? e.InvoiceNumber
                     : e.Type == LedgerEntryType.Payment
-                        ? GetPaymentReference(e.Notes)
+                        ? e.PaymentReference
                         : e.Type == LedgerEntryType.Discount
-                            ? GetDiscountReference(e.Notes)
+                            ? e.DiscountReference
                             : null,
-                Notes = e.Type == LedgerEntryType.Payment
-                    ? GetPaymentNotes(e.Notes)
-                    : e.Type == LedgerEntryType.Discount
-                        ? GetDiscountNotes(e.Notes)
-                        : e.Notes
+                Notes = e.Notes
             });
         }
 
@@ -700,86 +696,6 @@ public sealed class ClientService : IClientService
         client.TotalBalance = projects.Sum(x => x.Balance);
 
         return client;
-    }
-
-    private static string? GetPaymentReference(string? notes)
-    {
-        if (string.IsNullOrWhiteSpace(notes))
-        {
-            return null;
-        }
-
-        var firstSegment = notes.Split('|', 2)[0].Trim();
-
-        const string prefix = "Payment Ref:";
-
-        if (firstSegment.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-        {
-            return firstSegment[prefix.Length..].Trim();
-        }
-
-        return firstSegment;
-    }
-
-    private static string? GetPaymentNotes(string? notes)
-    {
-        if (string.IsNullOrWhiteSpace(notes))
-        {
-            return null;
-        }
-
-        var parts = notes.Split('|', 2);
-
-        if (parts.Length < 2)
-        {
-            return null;
-        }
-
-        var remainingNotes = parts[1].Trim();
-
-        return string.IsNullOrWhiteSpace(remainingNotes)
-            ? null
-            : remainingNotes;
-    }
-
-    private static string? GetDiscountReference(string? notes)
-    {
-        if (string.IsNullOrWhiteSpace(notes))
-        {
-            return null;
-        }
-
-        var firstSegment = notes.Split('|', 2)[0].Trim();
-
-        const string prefix = "Discount Ref:";
-
-        if (firstSegment.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-        {
-            return firstSegment[prefix.Length..].Trim();
-        }
-
-        return firstSegment;
-    }
-
-    private static string? GetDiscountNotes(string? notes)
-    {
-        if (string.IsNullOrWhiteSpace(notes))
-        {
-            return null;
-        }
-
-        var parts = notes.Split('|', 2);
-
-        if (parts.Length < 2)
-        {
-            return null;
-        }
-
-        var remainingNotes = parts[1].Trim();
-
-        return string.IsNullOrWhiteSpace(remainingNotes)
-            ? null
-            : remainingNotes;
     }
 
     private string GetRequiredUserId()

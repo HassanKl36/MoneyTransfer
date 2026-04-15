@@ -165,8 +165,9 @@ public sealed class PaymentService : IPaymentService
             Type = LedgerEntryType.Payment,
             Amount = -dto.Amount,
             OccurredAt = dto.Date,
-            Notes = BuildLedgerNotes(paymentReference, paymentMethod, description),
+            Notes = BuildLedgerNotes(paymentMethod, description),
             InvoiceNumber = null,
+            PaymentReference = paymentReference,
             IsVoided = false,
             VoidedAt = null,
             CreatedAt = now,
@@ -427,8 +428,9 @@ public sealed class PaymentService : IPaymentService
                 Type = LedgerEntryType.Payment,
                 Amount = -allocationsByProjectId[p.Id],
                 OccurredAt = dto.Date,
-                Notes = BuildLedgerNotes(paymentReference, paymentMethod, description),
+                Notes = BuildLedgerNotes(paymentMethod, description),
                 InvoiceNumber = null,
+                PaymentReference = paymentReference,
                 IsVoided = false,
                 VoidedAt = null,
                 CreatedAt = now,
@@ -461,15 +463,11 @@ public sealed class PaymentService : IPaymentService
             : value.Trim();
     }
 
-    private static string BuildLedgerNotes(
-        string paymentReference,
+    private static string? BuildLedgerNotes(
         string? paymentMethod,
         string? description)
     {
-        var parts = new List<string>
-        {
-            $"Payment Ref: {paymentReference}"
-        };
+        var parts = new List<string>();
 
         if (!string.IsNullOrWhiteSpace(paymentMethod))
         {
@@ -481,7 +479,9 @@ public sealed class PaymentService : IPaymentService
             parts.Add(description);
         }
 
-        return string.Join(" | ", parts);
+        return parts.Count == 0
+            ? null
+            : string.Join(" | ", parts);
     }
 
     private string GetRequiredUserId()

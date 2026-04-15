@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MoneyTransfer.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using MoneyTransfer.Infrastructure.Data;
 namespace MoneyTransfer.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(MoneyTransferDbContext))]
-    partial class MoneyTransferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260415133410_R6_LedgerPaymentReferenceNormalization")]
+    partial class R6_LedgerPaymentReferenceNormalization
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -420,10 +423,6 @@ namespace MoneyTransfer.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("DiscountReference")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("InvoiceNumber")
                         .HasMaxLength(50)

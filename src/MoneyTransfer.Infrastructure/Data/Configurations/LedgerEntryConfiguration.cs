@@ -28,6 +28,12 @@ public sealed class LedgerEntryConfiguration : IEntityTypeConfiguration<LedgerEn
         builder.Property(x => x.InvoiceNumber)
             .HasMaxLength(50);
 
+        builder.Property(x => x.PaymentReference)
+            .HasMaxLength(50);
+
+        builder.Property(x => x.DiscountReference)
+            .HasMaxLength(50);
+
         builder.Property(x => x.CreatedAt)
             .IsRequired();
 

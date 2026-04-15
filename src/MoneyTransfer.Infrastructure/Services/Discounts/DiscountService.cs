@@ -174,8 +174,10 @@ public sealed class DiscountService : IDiscountService
             Type = LedgerEntryType.Discount,
             Amount = -dto.Amount,
             OccurredAt = dto.Date,
-            Notes = $"Discount Ref: {reference} | {reason}",
+            Notes = reason,
             InvoiceNumber = null,
+            PaymentReference = null,
+            DiscountReference = reference,
             IsVoided = false,
             CreatedAt = now,
             CreatedBy = userId
