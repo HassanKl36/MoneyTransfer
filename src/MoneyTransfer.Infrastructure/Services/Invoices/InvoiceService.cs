@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MoneyTransfer.Application.Common.Exceptions;
 using MoneyTransfer.Application.Common.Interfaces;
 using MoneyTransfer.Application.Services.Invoices;
 using MoneyTransfer.Domain.Entities;
@@ -67,17 +68,30 @@ public sealed class InvoiceService : IInvoiceService
     {
         var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
-        var projectExists = await _dbContext.Projects
+        var data = await _dbContext.Projects
             .AsNoTracking()
-            .AnyAsync(
-                x => x.Id == projectId
-                  && x.OrganizationId == organizationId
-                  && x.Status != ProjectStatus.Archived,
-                cancellationToken);
+            .Where(x => x.Id == projectId && x.OrganizationId == organizationId)
+            .Select(x => new
+            {
+                x.Id,
+                x.Status,
+                ClientStatus = x.Client!.Status
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (!projectExists)
+        if (data is null)
         {
-            throw new InvalidOperationException("Project was not found.");
+            throw new NotFoundException("Project not found.");
+        }
+
+        if (data.Status == ProjectStatus.Archived)
+        {
+            throw new InvalidOperationException("Archived projects cannot receive invoices.");
+        }
+
+        if (data.ClientStatus == ClientStatus.Archived)
+        {
+            throw new InvalidOperationException("Archived clients cannot receive invoices.");
         }
 
         return new InvoiceCreateDto
@@ -93,18 +107,32 @@ public sealed class InvoiceService : IInvoiceService
     {
         var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
-        var project = await _dbContext.Projects
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
-                x => x.Id == dto.ProjectId
-                  && x.OrganizationId == organizationId
-                  && x.Status != ProjectStatus.Archived,
-                cancellationToken);
+        var data = await _dbContext.Projects
+            .Where(x => x.Id == dto.ProjectId && x.OrganizationId == organizationId)
+            .Select(x => new
+            {
+                Project = x,
+                x.Status,
+                ClientStatus = x.Client!.Status
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (project is null)
+        if (data is null)
         {
-            throw new InvalidOperationException("Project was not found.");
+            throw new NotFoundException("Project not found.");
         }
+
+        if (data.Status == ProjectStatus.Archived)
+        {
+            throw new InvalidOperationException("Archived projects cannot receive invoices.");
+        }
+
+        if (data.ClientStatus == ClientStatus.Archived)
+        {
+            throw new InvalidOperationException("Archived clients cannot receive invoices.");
+        }
+
+        var project = data.Project;
 
         var invoiceNumber = await _financialIdentityGenerator.GenerateInvoiceNumberAsync(
             organizationId,

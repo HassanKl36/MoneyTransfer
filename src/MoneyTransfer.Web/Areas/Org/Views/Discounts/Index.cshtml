@@ -7,6 +7,13 @@
 
 <h1>Discounts</h1>
 
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+
 <p>
     <a asp-area="Org"
        asp-controller="Discounts"

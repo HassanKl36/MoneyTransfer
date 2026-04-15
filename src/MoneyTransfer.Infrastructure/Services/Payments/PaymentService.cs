@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MoneyTransfer.Application.Common.Exceptions;
 using MoneyTransfer.Application.Common.Interfaces;
 using MoneyTransfer.Application.Services.Payments;
 using MoneyTransfer.Domain.Entities;
@@ -66,15 +67,30 @@ public sealed class PaymentService : IPaymentService
     {
         var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
-        var project = await _dbContext.Projects
+        var data = await _dbContext.Projects
             .AsNoTracking()
-            .FirstOrDefaultAsync(
-                p => p.Id == projectId && p.OrganizationId == organizationId,
-                cancellationToken);
+            .Where(p => p.Id == projectId && p.OrganizationId == organizationId)
+            .Select(p => new
+            {
+                p.Id,
+                p.Status,
+                ClientStatus = p.Client!.Status
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (project is null || project.Status == ProjectStatus.Archived)
+        if (data is null)
         {
-            throw new InvalidOperationException("Project not available for payment creation.");
+            throw new NotFoundException("Project not found.");
+        }
+
+        if (data.Status == ProjectStatus.Archived)
+        {
+            throw new InvalidOperationException("Archived projects cannot receive payments.");
+        }
+
+        if (data.ClientStatus == ClientStatus.Archived)
+        {
+            throw new InvalidOperationException("Archived clients cannot receive payments.");
         }
 
         return new PaymentCreateDto
@@ -90,20 +106,32 @@ public sealed class PaymentService : IPaymentService
     {
         var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
-        var project = await _dbContext.Projects
-            .FirstOrDefaultAsync(
-                p => p.Id == dto.ProjectId && p.OrganizationId == organizationId,
-                cancellationToken);
+        var data = await _dbContext.Projects
+            .Where(p => p.Id == dto.ProjectId && p.OrganizationId == organizationId)
+            .Select(p => new
+            {
+                Project = p,
+                p.Status,
+                ClientStatus = p.Client!.Status
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (project is null)
+        if (data is null)
         {
-            throw new InvalidOperationException("Project not found.");
+            throw new NotFoundException("Project not found.");
         }
 
-        if (project.Status == ProjectStatus.Archived)
+        if (data.Status == ProjectStatus.Archived)
         {
             throw new InvalidOperationException("Archived projects cannot receive payments.");
         }
+
+        if (data.ClientStatus == ClientStatus.Archived)
+        {
+            throw new InvalidOperationException("Archived clients cannot receive payments.");
+        }
+
+        var project = data.Project;
 
         var paymentReference = await _financialIdentityGenerator.GeneratePaymentReferenceAsync(
             organizationId,

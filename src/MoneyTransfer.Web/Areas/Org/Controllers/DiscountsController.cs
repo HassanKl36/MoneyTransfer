@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MoneyTransfer.Application.Common.Exceptions;
 using MoneyTransfer.Application.Services.Discounts;
 
 namespace MoneyTransfer.Web.Areas.Org.Controllers;
@@ -32,9 +33,14 @@ public sealed class DiscountsController : Controller
             var model = await _discountService.InitializeCreateAsync(projectId, cancellationToken);
             return View(model);
         }
-        catch (InvalidOperationException)
+        catch (NotFoundException)
         {
             return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToAction(nameof(Index), new { projectId });
         }
     }
 
@@ -51,6 +57,10 @@ public sealed class DiscountsController : Controller
         {
             await _discountService.CreateAsync(model, cancellationToken);
             return RedirectToAction(nameof(Index), new { projectId = model.ProjectId });
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
         }
         catch (InvalidOperationException ex)
         {

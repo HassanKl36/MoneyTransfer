@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MoneyTransfer.Application.Common.Exceptions;
 using MoneyTransfer.Application.Services.Payments;
 
 namespace MoneyTransfer.Web.Areas.Org.Controllers;
@@ -39,9 +40,14 @@ public sealed class PaymentsController : Controller
             var model = await _paymentService.InitializeCreateAsync(projectId, cancellationToken);
             return View(model);
         }
-        catch (InvalidOperationException)
+        catch (NotFoundException)
         {
             return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToAction(nameof(Index), new { projectId });
         }
     }
 
@@ -59,9 +65,14 @@ public sealed class PaymentsController : Controller
             await _paymentService.CreateAsync(model, cancellationToken);
             return RedirectToAction(nameof(Index), new { projectId = model.ProjectId });
         }
-        catch (InvalidOperationException)
+        catch (NotFoundException)
         {
             return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            return View(model);
         }
     }
 

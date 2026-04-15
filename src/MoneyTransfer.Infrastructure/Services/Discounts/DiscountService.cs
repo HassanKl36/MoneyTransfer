@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MoneyTransfer.Application.Common.Exceptions;
 using MoneyTransfer.Application.Common.Interfaces;
 using MoneyTransfer.Application.Services.Discounts;
 using MoneyTransfer.Domain.Entities;
@@ -63,12 +64,30 @@ public sealed class DiscountService : IDiscountService
     {
         var orgId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
-        var exists = await _dbContext.Projects
-            .AnyAsync(x => x.Id == projectId && x.OrganizationId == orgId, cancellationToken);
+        var data = await _dbContext.Projects
+            .AsNoTracking()
+            .Where(x => x.Id == projectId && x.OrganizationId == orgId)
+            .Select(x => new
+            {
+                x.Id,
+                x.Status,
+                ClientStatus = x.Client!.Status
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (!exists)
+        if (data is null)
         {
-            throw new InvalidOperationException("Project not found.");
+            throw new NotFoundException("Project not found.");
+        }
+
+        if (data.Status == ProjectStatus.Archived)
+        {
+            throw new InvalidOperationException("Archived projects cannot receive discounts.");
+        }
+
+        if (data.ClientStatus == ClientStatus.Archived)
+        {
+            throw new InvalidOperationException("Archived clients cannot receive discounts.");
         }
 
         return new DiscountCreateDto
@@ -84,13 +103,32 @@ public sealed class DiscountService : IDiscountService
     {
         var orgId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
-        var project = await _dbContext.Projects
-            .FirstOrDefaultAsync(x => x.Id == dto.ProjectId && x.OrganizationId == orgId, cancellationToken);
+        var data = await _dbContext.Projects
+            .Where(x => x.Id == dto.ProjectId && x.OrganizationId == orgId)
+            .Select(x => new
+            {
+                Project = x,
+                x.Status,
+                ClientStatus = x.Client!.Status
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (project is null)
+        if (data is null)
         {
-            throw new InvalidOperationException("Project not found.");
+            throw new NotFoundException("Project not found.");
         }
+
+        if (data.Status == ProjectStatus.Archived)
+        {
+            throw new InvalidOperationException("Archived projects cannot receive discounts.");
+        }
+
+        if (data.ClientStatus == ClientStatus.Archived)
+        {
+            throw new InvalidOperationException("Archived clients cannot receive discounts.");
+        }
+
+        var project = data.Project;
 
         if (string.IsNullOrWhiteSpace(dto.Reason))
         {
@@ -117,7 +155,7 @@ public sealed class DiscountService : IDiscountService
         var discount = new Discount
         {
             Id = Guid.NewGuid(),
-            ProjectId = dto.ProjectId,
+            ProjectId = project.Id,
             OrganizationId = orgId,
             DiscountReference = reference,
             Amount = dto.Amount,
