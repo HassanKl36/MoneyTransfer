@@ -30,6 +30,8 @@ public class HomeController : Controller
         if (result is null)
             return Forbid();
 
+        ViewData["NavbarClientName"] = result.Name;
+
         return View(result);
     }
 
@@ -72,7 +74,7 @@ public class HomeController : Controller
             return Forbid();
 
         var bytes = _pdfRenderer.Render(statement);
-        var fileName = $"Statement_{statement.ClientName}_{fromDate:yyyyMMdd}_{toDate:yyyyMMdd}.pdf";
+        var fileName = BuildStatementFileName(statement, "pdf");
 
         return File(bytes, "application/pdf", fileName);
     }
@@ -96,11 +98,23 @@ public class HomeController : Controller
             return Forbid();
 
         var bytes = _excelRenderer.Render(statement);
-        var fileName = $"Statement_{statement.ClientName}_{fromDate:yyyyMMdd}_{toDate:yyyyMMdd}.xlsx";
+        var fileName = BuildStatementFileName(statement, "xlsx");
 
         return File(
             bytes,
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             fileName);
+    }
+
+    private static string BuildStatementFileName(ClientStatementDto statement, string extension)
+    {
+        var safeClientName = string.Join("_",
+            statement.ClientName
+                .Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+        var fromPart = statement.FromDate?.ToString("yyyyMMdd") ?? "all";
+        var toPart = statement.ToDate?.ToString("yyyyMMdd") ?? statement.AsOfDate.ToString("yyyyMMdd");
+
+        return $"Statement_{safeClientName}_{fromPart}_{toPart}.{extension}";
     }
 }

@@ -2,123 +2,156 @@
 
 @{
     ViewData["Title"] = "Projects";
+    ViewData["BackUrl"] = Url.Action("Index", "Home", new { area = "Org" });
+    ViewData["BackText"] = "Back to Org Portal";
+
     var search = ViewBag.Search as string;
     var selectedStatus = ViewBag.Status?.ToString();
+
+    static string StatusBadgeClass(string? status) => status switch
+    {
+        "Active" => "bg-success text-white",
+        "Completed" => "bg-primary text-white",
+        "Archived" => "bg-secondary text-white",
+        _ => "bg-light text-dark border"
+    };
 }
 
-<h1>Projects</h1>
+<div class="page-header">
+    <h1>Projects</h1>
+    <p>Manage active work, track project status, and open financial activity pages.</p>
+</div>
 
-<p>
-    <a asp-area="Org" asp-controller="Projects" asp-action="Create" class="btn btn-primary">Create Project</a>
-</p>
-
-<form method="get" class="mb-3">
-    <div class="row g-2">
-        <div class="col-md-5">
-            <input name="search" value="@search" class="form-control" placeholder="Search projects..." />
-        </div>
-        <div class="col-md-3">
-            <select name="status" class="form-select">
-                <option value="" selected="@(ViewBag.Status == null)">Open</option>
-                <option value="0" selected="@(selectedStatus == "Active")">Active</option>
-                <option value="1" selected="@(selectedStatus == "Completed")">Completed</option>
-                <option value="2" selected="@(selectedStatus == "Archived")">Archived</option>
-            </select>
-        </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-outline-secondary">Search</button>
-        </div>
-        <div class="col-auto">
-            <a asp-area="Org" asp-controller="Projects" asp-action="Index" class="btn btn-outline-secondary">Clear</a>
-        </div>
+<div class="section-card">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h4 class="mb-0">Search & Filters</h4>
+        <a asp-area="Org" asp-controller="Projects" asp-action="Create" class="btn btn-primary">Create Project</a>
     </div>
-</form>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Client</th>
-            <th>Code</th>
-            <th>Description</th>
-            <th>Status</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model.Count == 0)
-        {
-            <tr>
-                <td colspan="6">No projects found.</td>
-            </tr>
-        }
-        else
-        {
-            foreach (var project in Model)
-            {
-                <tr>
-                    <td>@project.Name</td>
-                    <td>@project.ClientName</td>
-                    <td>@project.Code</td>
-                    <td>@project.Description</td>
-                    <td>@project.Status</td>
-                    <td class="text-end">
+    <form method="get">
+        <div class="row g-3">
+            <div class="col-md-5">
+                <label for="search" class="form-label">Search</label>
+                <input id="search" name="search" value="@search" class="form-control" placeholder="Search projects..." />
+            </div>
 
-                        <a asp-area="Org"
-                           asp-controller="Projects"
-                           asp-action="Edit"
-                           asp-route-id="@project.Id"
-                           class="btn btn-sm btn-outline-primary">
-                            Edit
-                        </a>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select id="status" name="status" class="form-select">
+                    <option value="" selected="@(ViewBag.Status == null)">Open</option>
+                    <option value="0" selected="@(selectedStatus == "Active")">Active</option>
+                    <option value="1" selected="@(selectedStatus == "Completed")">Completed</option>
+                    <option value="2" selected="@(selectedStatus == "Archived")">Archived</option>
+                </select>
+            </div>
 
-                        <a asp-area="Org"
-                           asp-controller="Projects"
-                           asp-action="Details"
-                           asp-route-id="@project.Id"
-                           class="btn btn-sm btn-outline-secondary">
-                            Details
-                        </a>
+            <div class="col-12 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a asp-area="Org" asp-controller="Projects" asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </div>
+    </form>
+</div>
 
-                        <a asp-area="Org"
-                           asp-controller="Invoices"
-                           asp-action="Index"
-                           asp-route-projectId="@project.Id"
-                           class="btn btn-sm btn-outline-secondary">
-                            Invoices
-                        </a>
+<div class="section-card">
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state">
+            No projects were found for the selected filters.
+        </div>
+    }
+    else
+    {
+        <div class="table-container">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Client</th>
+                        <th>Code</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var project in Model)
+                    {
+                        <tr>
+                            <td>@project.Name</td>
+                            <td>@project.ClientName</td>
+                            <td>@project.Code</td>
+                            <td>@project.Description</td>
+                            <td>
+                                <span class="badge @StatusBadgeClass(project.Status.ToString())">
+                                    @project.Status
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex flex-wrap justify-content-end gap-2">
+                                    <a asp-area="Org"
+                                       asp-controller="Projects"
+                                       asp-action="Edit"
+                                       asp-route-id="@project.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Edit
+                                    </a>
 
-                        <a asp-area="Org"
-                           asp-controller="Payments"
-                           asp-action="Index"
-                           asp-route-projectId="@project.Id"
-                           class="btn btn-sm btn-outline-secondary">
-                            Payments
-                        </a>
+                                    <a asp-area="Org"
+                                       asp-controller="Projects"
+                                       asp-action="Details"
+                                       asp-route-id="@project.Id"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        Details
+                                    </a>
 
-                        <a asp-area="Org"
-                           asp-controller="Discounts"
-                           asp-action="Index"
-                           asp-route-projectId="@project.Id"
-                           class="btn btn-sm btn-outline-secondary">
-                            Discounts
-                        </a>
+                                    <a asp-area="Org"
+                                       asp-controller="Invoices"
+                                       asp-action="Index"
+                                       asp-route-projectId="@project.Id"
+                                       asp-route-backUrl="@Url.Action("Index", "Projects", new { area = "Org" })"
+                                       asp-route-backText="Back to Projects"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        Invoices
+                                    </a>
 
-                        <form asp-area="Org"
-                              asp-controller="Projects"
-                              asp-action="Archive"
-                              asp-route-id="@project.Id"
-                              method="post"
-                              class="d-inline">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                Archive
-                            </button>
-                        </form>
+                                    <a asp-area="Org"
+                                       asp-controller="Payments"
+                                       asp-action="Index"
+                                       asp-route-projectId="@project.Id"
+                                       asp-route-backUrl="@Url.Action("Index", "Projects", new { area = "Org" })"
+                                       asp-route-backText="Back to Projects"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        Payments
+                                    </a>
 
-                    </td>
-                </tr>
-            }
-        }
-    </tbody>
-</table>
+                                    <a asp-area="Org"
+                                       asp-controller="Discounts"
+                                       asp-action="Index"
+                                       asp-route-projectId="@project.Id"
+                                       asp-route-backUrl="@Url.Action("Index", "Projects", new { area = "Org" })"
+                                       asp-route-backText="Back to Projects"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        Discounts
+                                    </a>
+
+                                    <form asp-area="Org"
+                                          asp-controller="Projects"
+                                          asp-action="Archive"
+                                          asp-route-id="@project.Id"
+                                          method="post"
+                                          class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            Archive
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

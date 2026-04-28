@@ -1,118 +1,235 @@
-﻿@model MoneyTransfer.Application.Services.Clients.ClientDetailsDto
+﻿@model MoneyTransfer.Web.Areas.Org.Models.Clients.ClientDetailsViewModel
+@using MoneyTransfer.Domain.Enums
 
 @{
     ViewData["Title"] = "Client Details";
+    ViewData["BackUrl"] = Url.Action("Index", "Clients", new { area = "Org" });
+    ViewData["BackText"] = "Back to Clients";
+
+    var client = Model.Client;
+    var statement = Model.Statement;
 }
 
-<h1>Client Details</h1>
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+    <div>
+        <h1>Client Details</h1>
+        <p class="mb-0">Review client information, balances, projects, and full transaction history.</p>
+    </div>
 
-<div class="mb-4">
-    <dl class="row">
+    <div class="page-actions">
+        <a asp-area="Org"
+           asp-controller="Payments"
+           asp-action="CreateClientAllocation"
+           asp-route-clientId="@client.Id"
+           class="btn btn-primary">
+            Record Client Payment Allocation
+        </a>
+    </div>
+</div>
+
+<div class="summary-card">
+    <div class="summary-grid">
+        <div class="summary-item">
+            <span class="summary-label">Total Balance</span>
+            <span class="summary-value">$@client.TotalBalance.ToString("0.00")</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">As Of (UTC)</span>
+            <span class="summary-value">@statement.AsOfDate.ToString("dd/MM/yyyy HH:mm")</span>
+        </div>
+    </div>
+</div>
+
+<div class="section-card">
+    <h4 class="mb-3">Client Information</h4>
+
+    <dl class="row mb-0">
         <dt class="col-sm-3">Name</dt>
-        <dd class="col-sm-9">@Model.Name</dd>
+        <dd class="col-sm-9">@client.Name</dd>
 
         <dt class="col-sm-3">Phone Number</dt>
-        <dd class="col-sm-9">@Model.PhoneNumber</dd>
+        <dd class="col-sm-9">@client.PhoneNumber</dd>
 
         <dt class="col-sm-3">Email</dt>
-        <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.Email) ? "-" : Model.Email)</dd>
-
-        <dt class="col-sm-3">Total Balance</dt>
-        <dd class="col-sm-9">@Model.TotalBalance.ToString("0.00")</dd>
+        <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(client.Email) ? "-" : client.Email)</dd>
     </dl>
 </div>
 
-<h2>Statement Export</h2>
+<div class="section-card">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h4 class="mb-0">Statement Filters</h4>
+        <div class="page-actions mb-0">
+            <a asp-area="Org"
+               asp-controller="Clients"
+               asp-action="ExportPdf"
+               asp-route-id="@client.Id"
+               asp-route-fromDate="@statement.FromDate"
+               asp-route-toDate="@statement.ToDate"
+               asp-route-projectId="@statement.ProjectId"
+               asp-route-transactionType="@statement.TransactionType"
+               class="btn btn-outline-secondary">
+                Export PDF
+            </a>
 
-<p class="text-muted">
-    Filters apply only to exported statements. This page does not display transactions.
-</p>
-
-<form method="get" class="mb-4">
-    <input type="hidden" name="id" value="@Model.Id" />
-
-    <div class="mb-2">
-        <label for="fromDate">From</label>
-        <input id="fromDate" name="fromDate" type="date" class="form-control" />
+            <a asp-area="Org"
+               asp-controller="Clients"
+               asp-action="ExportExcel"
+               asp-route-id="@client.Id"
+               asp-route-fromDate="@statement.FromDate"
+               asp-route-toDate="@statement.ToDate"
+               asp-route-projectId="@statement.ProjectId"
+               asp-route-transactionType="@statement.TransactionType"
+               class="btn btn-outline-secondary">
+                Export Excel
+            </a>
+        </div>
     </div>
 
-    <div class="mb-2">
-        <label for="toDate">To</label>
-        <input id="toDate" name="toDate" type="date" class="form-control" />
-    </div>
+    <form method="get" asp-area="Org" asp-controller="Clients" asp-action="Details">
+        <input type="hidden" name="id" value="@client.Id" />
 
-    <div class="mb-2">
-        <label for="projectId">Project</label>
-        <select id="projectId" name="projectId" class="form-select">
-            <option value="">All</option>
-            @foreach (var project in Model.Projects)
-            {
-                <option value="@project.ProjectId">@project.ProjectName</option>
-            }
-        </select>
-    </div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label for="fromDate" class="form-label">From Date</label>
+                <input id="fromDate"
+                       name="fromDate"
+                       type="date"
+                       value="@(statement.FromDate?.ToString("yyyy-MM-dd"))"
+                       class="form-control" />
+            </div>
 
-    <div class="mb-3">
-        <label for="transactionType">Transaction Type</label>
-        <select id="transactionType" name="transactionType" class="form-select">
-            <option value="">All</option>
-            @foreach (var type in Enum.GetValues<MoneyTransfer.Domain.Enums.LedgerEntryType>())
-            {
-                <option value="@type">@type</option>
-            }
-        </select>
-    </div>
+            <div class="col-md-3">
+                <label for="toDate" class="form-label">To Date</label>
+                <input id="toDate"
+                       name="toDate"
+                       type="date"
+                       value="@(statement.ToDate?.ToString("yyyy-MM-dd"))"
+                       class="form-control" />
+            </div>
 
-    <button type="submit"
-            formaction="@Url.Action("ExportPdf", "Clients", new { area = "Org" })"
-            class="btn btn-secondary">
-        Export PDF
-    </button>
+            <div class="col-md-3">
+                <label for="projectId" class="form-label">Project</label>
+                <select id="projectId" name="projectId" class="form-select">
+                    <option value="">All</option>
+                    @foreach (var project in client.Projects)
+                    {
+                        <option value="@project.ProjectId" selected="@(statement.ProjectId == project.ProjectId)">
+                            @project.ProjectName
+                        </option>
+                    }
+                </select>
+            </div>
 
-    <button type="submit"
-            formaction="@Url.Action("ExportExcel", "Clients", new { area = "Org" })"
-            class="btn btn-secondary">
-        Export Excel
-    </button>
-</form>
+            <div class="col-md-3">
+                <label for="transactionType" class="form-label">Transaction Type</label>
+                <select id="transactionType" name="transactionType" class="form-select">
+                    <option value="">All</option>
+                    @foreach (var type in Enum.GetValues<LedgerEntryType>())
+                    {
+                        <option value="@type" selected="@(statement.TransactionType == type)">
+                            @type
+                        </option>
+                    }
+                </select>
+            </div>
 
-<h2>Projects</h2>
+            <div class="col-12 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a asp-area="Org"
+                   asp-controller="Clients"
+                   asp-action="Details"
+                   asp-route-id="@client.Id"
+                   class="btn btn-outline-secondary">
+                    Clear
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
 
-@if (Model.Projects.Count == 0)
-{
-    <p>No projects found for this client.</p>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Project</th>
-                <th>Code</th>
-                <th>Balance</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var project in Model.Projects)
-            {
-                <tr>
-                    <td>@project.ProjectName</td>
-                    <td>@project.ProjectCode</td>
-                    <td>@project.Balance.ToString("0.00")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+<div class="section-card">
+    <h4 class="mb-3">Transactions</h4>
 
-<p>
+    @if (statement.Entries.Count == 0)
+    {
+        <div class="empty-state">
+            No transactions were found for the selected filters.
+        </div>
+    }
+    else
+    {
+        <div class="table-container">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Project</th>
+                        <th>Type</th>
+                        <th class="text-end">Amount</th>
+                        <th class="text-end">Running Balance</th>
+                        <th>Reference</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in statement.Entries)
+                    {
+                        <tr>
+                            <td>@entry.OccurredAt.ToString("dd/MM/yyyy")</td>
+                            <td>@entry.ProjectName</td>
+                            <td>@entry.Type</td>
+                            <td class="text-end">$@entry.Amount.ToString("0.00")</td>
+                            <td class="text-end">$@entry.RunningBalance.ToString("0.00")</td>
+                            <td>@entry.Reference</td>
+                            <td>@entry.Notes</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<div class="section-card">
+    <h4 class="mb-3">Projects</h4>
+
+    @if (client.Projects.Count == 0)
+    {
+        <div class="empty-state">
+            No projects found for this client.
+        </div>
+    }
+    else
+    {
+        <div class="table-container">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Project</th>
+                        <th>Code</th>
+                        <th class="text-end">Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var project in client.Projects)
+                    {
+                        <tr>
+                            <td>@project.ProjectName</td>
+                            <td>@project.ProjectCode</td>
+                            <td class="text-end">$@project.Balance.ToString("0.00")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<div class="page-actions">
     <a asp-area="Org"
-       asp-controller="Payments"
-       asp-action="CreateClientAllocation"
-       asp-route-clientId="@Model.Id"
-       class="btn btn-primary">
-        Record Client Payment Allocation
+       asp-controller="Clients"
+       asp-action="Index"
+       class="btn btn-outline-secondary">
+        Back to Clients
     </a>
-
-    <a asp-area="Org" asp-controller="Clients" asp-action="Index" class="btn btn-secondary">Back to Clients</a>
-</p>
+</div>

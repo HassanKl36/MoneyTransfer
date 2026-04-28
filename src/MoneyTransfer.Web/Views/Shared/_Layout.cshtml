@@ -3,47 +3,125 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - MoneyTransfer.Web</title>
+    <title>@ViewData["Title"] - MoneyTransfer</title>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/MoneyTransfer.Web.styles.css" asp-append-version="true" />
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">MoneyTransfer.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+        @{
+            var isAuthenticated = User?.Identity?.IsAuthenticated ?? false;
+            var isOrgUser = User?.IsInRole("Admin") == true || User?.IsInRole("Staff") == true;
+            var isCustomerUser = User?.IsInRole("Customer") == true;
+
+            var homeArea = "";
+            var homeController = "Home";
+            var homeAction = "Index";
+
+            if (isOrgUser)
+            {
+                homeArea = "Org";
+            }
+            else if (isCustomerUser)
+            {
+                homeArea = "Customer";
+            }
+
+            var displayName =
+            isCustomerUser
+            ? (ViewData["NavbarClientName"] as string
+            ?? User?.FindFirst("full_name")?.Value
+            ?? "Customer")
+            : (User?.FindFirst("full_name")?.Value
+            ?? User?.Identity?.Name
+            ?? "Signed in");
+        }
+
+        <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+            <div class="container">
+                <a class="navbar-brand fw-semibold" asp-area="" asp-controller="Home" asp-action="Index">
+                    MoneyTransfer
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+
+                <div id="mainNav" class="collapse navbar-collapse">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link"
+                               asp-area="@homeArea"
+                               asp-controller="@homeController"
+                               asp-action="@homeAction">
+                                Portal
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
                     </ul>
+
+                    @if (isAuthenticated)
+                    {
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-2 text-white">
+                                <span class="rounded-circle bg-success d-inline-block" style="width: 10px; height: 10px;"></span>
+                                <span class="small fw-semibold">@displayName</span>
+                            </div>
+
+                            <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="d-flex">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-light btn-sm">
+                                    Logout
+                                </button>
+                            </form>
+                        </div>
+                    }
+                    else
+                    {
+                        <a asp-area="" asp-controller="Account" asp-action="Login" class="btn btn-outline-light btn-sm">
+                            Login
+                        </a>
+                    }
                 </div>
             </div>
         </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
+        @{
+            var backUrl = ViewData["BackUrl"] as string;
+            var backText = ViewData["BackText"] as string ?? "Back";
+        }
+
+        @if (!string.IsNullOrWhiteSpace(backUrl))
+        {
+            <div class="border-bottom bg-white">
+                <div class="container py-2">
+                    <a href="@backUrl" class="btn btn-sm btn-outline-secondary">
+                        ← @backText
+                    </a>
+                </div>
+            </div>
+        }
+    </header>
+
+    <main class="flex-grow-1">
+        <div class="container py-4">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="app-footer mt-auto">
         <div class="container">
-            &copy; 2026 - MoneyTransfer.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <span>&copy; 2026 - MoneyTransfer</span>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

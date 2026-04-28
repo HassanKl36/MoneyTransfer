@@ -21,4 +21,8 @@ public interface IPaymentService
     Task<ClientPaymentCreateResultDto> CreateClientAllocationAsync(
         ClientPaymentCreateDto dto,
         CancellationToken cancellationToken = default);
+
+    Task VoidAsync(
+        Guid paymentId, 
+        CancellationToken cancellationToken = default);
 }

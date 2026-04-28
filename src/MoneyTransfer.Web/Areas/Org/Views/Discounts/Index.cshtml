@@ -2,55 +2,113 @@
 
 @{
     ViewData["Title"] = "Discounts";
+    ViewData["BackUrl"] = ViewBag.BackUrl as string ?? Url.Action("Index", "Projects", new { area = "Org" });
+    ViewData["BackText"] = ViewBag.BackText as string ?? "Back to Projects";
+
     var projectId = (Guid)ViewBag.ProjectId;
+    var backUrl = ViewBag.BackUrl as string;
+    var backText = ViewBag.BackText as string;
 }
 
-<h1>Discounts</h1>
+<div class="page-header">
+    <h1>Discounts</h1>
+    <p>Review project discounts and create new discount entries.</p>
+</div>
 
-@if (TempData["ErrorMessage"] is string errorMessage)
-{
-    <div class="alert alert-danger">
-        @errorMessage
+<div class="section-card">
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success">
+            @successMessage
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="alert alert-danger">
+            @errorMessage
+        </div>
+    }
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h4 class="mb-0">Discount Records</h4>
+        <a asp-area="Org"
+           asp-controller="Discounts"
+           asp-action="Create"
+           asp-route-projectId="@projectId"
+           asp-route-backUrl="@backUrl"
+           asp-route-backText="@backText"
+           class="btn btn-primary">
+            Create Discount
+        </a>
     </div>
-}
 
-<p>
-    <a asp-area="Org"
-       asp-controller="Discounts"
-       asp-action="Create"
-       asp-route-projectId="@projectId"
-       class="btn btn-primary">
-        Create Discount
-    </a>
-</p>
-
-@if (!Model.Any())
-{
-    <div class="alert alert-info">
-        No discounts found for this project.
-    </div>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Discount Reference</th>
-                <th>Amount</th>
-                <th>Reason</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var discount in Model)
-            {
-                <tr>
-                    <td>@discount.DiscountReference</td>
-                    <td>@discount.Amount</td>
-                    <td>@discount.Reason</td>
-                    <td>@discount.Date.ToString("dd/MM/yyyy")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            No discounts found for this project.
+        </div>
+    }
+    else
+    {
+        <div class="table-container">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Discount Reference</th>
+                        <th>Status</th>
+                        <th class="text-end">Amount</th>
+                        <th>Reason</th>
+                        <th>Date</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var discount in Model)
+                    {
+                        <tr>
+                            <td>@discount.DiscountReference</td>
+                            <td>
+                                @if (discount.IsVoided)
+                                {
+                                    <span class="badge bg-secondary">Voided</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                            </td>
+                            <td class="text-end">$@discount.Amount.ToString("0.00")</td>
+                            <td>@discount.Reason</td>
+                            <td>@discount.Date.ToString("dd/MM/yyyy") @discount.CreatedAt.ToString("HH:mm")</td>
+                            <td class="text-end">
+                                @if (!discount.IsVoided && User.IsInRole("Admin"))
+                                {
+                                    <form asp-area="Org"
+                                          asp-controller="Discounts"
+                                          asp-action="Void"
+                                          method="post"
+                                          class="d-inline"
+                                          onsubmit="return confirm('Void this discount? This will create a reversing ledger entry.');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@discount.Id" />
+                                        <input type="hidden" name="projectId" value="@projectId" />
+                                        <input type="hidden" name="backUrl" value="@backUrl" />
+                                        <input type="hidden" name="backText" value="@backText" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            Void
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No actions</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

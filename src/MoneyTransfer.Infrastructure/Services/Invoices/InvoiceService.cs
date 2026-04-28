@@ -49,6 +49,8 @@ public sealed class InvoiceService : IInvoiceService
             .AsNoTracking()
             .Where(x => x.ProjectId == projectId && x.OrganizationId == organizationId)
             .OrderByDescending(x => x.Date)
+            .ThenByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id)
             .Select(x => new InvoiceListItemDto
             {
                 Id = x.Id,
@@ -57,7 +59,12 @@ public sealed class InvoiceService : IInvoiceService
                 Amount = x.Amount,
                 Date = x.Date,
                 Description = x.Description,
-                CreatedAt = x.CreatedAt
+                CreatedAt = x.CreatedAt,
+                IsVoided = _dbContext.LedgerEntries.Any(l =>
+                    l.OrganizationId == organizationId &&
+                    l.InvoiceNumber == x.InvoiceNumber &&
+                    l.Type == LedgerEntryType.Invoice &&
+                    l.IsVoided)
             })
             .ToListAsync(cancellationToken);
     }
@@ -168,6 +175,8 @@ public sealed class InvoiceService : IInvoiceService
             OccurredAt = dto.Date,
             Notes = description,
             InvoiceNumber = invoiceNumber,
+            PaymentReference = null,
+            DiscountReference = null,
             IsVoided = false,
             VoidedAt = null,
             CreatedAt = now,
@@ -184,6 +193,67 @@ public sealed class InvoiceService : IInvoiceService
             Id = invoice.Id,
             InvoiceNumber = invoice.InvoiceNumber
         };
+    }
+
+    public async Task VoidAsync(Guid invoiceId, CancellationToken cancellationToken = default)
+    {
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
+
+        var invoice = await _dbContext.Invoices
+            .FirstOrDefaultAsync(
+                x => x.Id == invoiceId && x.OrganizationId == organizationId,
+                cancellationToken);
+
+        if (invoice is null)
+        {
+            throw new NotFoundException("Invoice not found.");
+        }
+
+        var ledger = await _dbContext.LedgerEntries
+            .FirstOrDefaultAsync(
+                x => x.OrganizationId == organizationId &&
+                     x.InvoiceNumber == invoice.InvoiceNumber &&
+                     x.Type == LedgerEntryType.Invoice,
+                cancellationToken);
+
+        if (ledger is null)
+        {
+            throw new InvalidOperationException("Ledger entry not found.");
+        }
+
+        if (ledger.IsVoided)
+        {
+            throw new InvalidOperationException("Invoice already voided.");
+        }
+
+        var now = DateTime.UtcNow;
+        var userId = GetRequiredUserId();
+
+        var reversal = new LedgerEntry
+        {
+            Id = Guid.NewGuid(),
+            OrganizationId = ledger.OrganizationId,
+            ClientId = ledger.ClientId,
+            ProjectId = ledger.ProjectId,
+            Type = LedgerEntryType.Invoice,
+            Amount = -ledger.Amount,
+            OccurredAt = now,
+            Notes = $"Void of invoice {ledger.InvoiceNumber}",
+            InvoiceNumber = null,
+            PaymentReference = null,
+            DiscountReference = null,
+            IsVoided = false,
+            VoidedAt = null,
+            CreatedAt = now,
+            CreatedBy = userId
+        };
+
+        ledger.IsVoided = true;
+        ledger.VoidedAt = now;
+
+        _dbContext.LedgerEntries.Add(reversal);
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private string GetRequiredUserId()

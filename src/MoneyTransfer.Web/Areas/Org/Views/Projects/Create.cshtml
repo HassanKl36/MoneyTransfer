@@ -2,39 +2,50 @@
 
 @{
     ViewData["Title"] = "Create Project";
+    ViewData["BackUrl"] = Url.Action("Index", "Projects", new { area = "Org" });
+    ViewData["BackText"] = "Back to Projects";
 }
 
-<h1>Create Project</h1>
+<div class="page-header">
+    <h1>Create Project</h1>
+    <p>Create a new project under a selected client.</p>
+</div>
 
 <form asp-action="Create" method="post">
     @Html.AntiForgeryToken()
 
-    <div class="mb-3">
-        <label asp-for="Project.ClientId" class="form-label"></label>
-        <select asp-for="Project.ClientId" asp-items="Model.Clients" class="form-select">
-            <option value="">-- Select client --</option>
-        </select>
-        <span asp-validation-for="Project.ClientId" class="text-danger"></span>
+    <div class="section-card">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="Project.ClientId" class="form-label"></label>
+                <select asp-for="Project.ClientId" asp-items="Model.Clients" class="form-select">
+                    <option value="">-- Select client --</option>
+                </select>
+                <span asp-validation-for="Project.ClientId" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Project.Name" class="form-label"></label>
+                <input asp-for="Project.Name" class="form-control" />
+                <span asp-validation-for="Project.Name" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Project.Description" class="form-label"></label>
+                <textarea asp-for="Project.Description" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Project.Description" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-text mt-3">
+            Project code will be generated automatically when the project is created.
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label asp-for="Project.Name" class="form-label"></label>
-        <input asp-for="Project.Name" class="form-control" />
-        <span asp-validation-for="Project.Name" class="text-danger"></span>
+    <div class="page-actions">
+        <button type="submit" class="btn btn-primary">Save Project</button>
+        <a asp-area="Org" asp-controller="Projects" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
     </div>
-
-    <div class="mb-3">
-        <label asp-for="Project.Description" class="form-label"></label>
-        <textarea asp-for="Project.Description" class="form-control" rows="4"></textarea>
-        <span asp-validation-for="Project.Description" class="text-danger"></span>
-    </div>
-
-    <div class="form-text mb-3">
-        Project code will be generated automatically when the project is created.
-    </div>
-
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a asp-area="Org" asp-controller="Projects" asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>
 
 @section Scripts {

@@ -28,8 +28,8 @@ public sealed class PaymentService : IPaymentService
     }
 
     public async Task<IReadOnlyList<PaymentListItemDto>> GetByProjectAsync(
-        Guid projectId,
-        CancellationToken cancellationToken = default)
+     Guid projectId,
+     CancellationToken cancellationToken = default)
     {
         var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
 
@@ -48,6 +48,8 @@ public sealed class PaymentService : IPaymentService
             .AsNoTracking()
             .Where(p => p.ProjectId == projectId && p.OrganizationId == organizationId)
             .OrderByDescending(p => p.Date)
+            .ThenByDescending(p => p.CreatedAt)
+            .ThenByDescending(p => p.Id)
             .Select(p => new PaymentListItemDto
             {
                 Id = p.Id,
@@ -56,7 +58,13 @@ public sealed class PaymentService : IPaymentService
                 Date = p.Date,
                 PaymentMethod = p.PaymentMethod,
                 Description = p.Description,
-                CreatedAt = p.CreatedAt
+                CreatedAt = p.CreatedAt,
+                IsVoided = _dbContext.LedgerEntries.Any(l =>
+                    l.OrganizationId == organizationId &&
+                    l.ProjectId == p.ProjectId &&
+                    l.PaymentReference == p.PaymentReference &&
+                    l.Type == LedgerEntryType.Payment &&
+                    l.IsVoided)
             })
             .ToListAsync(cancellationToken);
     }
@@ -233,8 +241,7 @@ public sealed class PaymentService : IPaymentService
             .AsNoTracking()
             .Where(x =>
                 x.OrganizationId == organizationId &&
-                x.ClientId == clientId &&
-                !x.IsVoided)
+                x.ClientId == clientId)
             .GroupBy(x => x.ProjectId)
             .Select(g => new
             {
@@ -280,7 +287,19 @@ public sealed class PaymentService : IPaymentService
         var paymentMethod = NormalizeOptionalText(dto.PaymentMethod);
         var description = NormalizeOptionalText(dto.Description);
 
-        var allocations = (dto.Allocations ?? new List<ClientPaymentAllocationLineDto>())
+        var rawAllocations = dto.Allocations ?? new List<ClientPaymentAllocationLineDto>();
+
+        if (rawAllocations.Any(x => x is not null && x.ProjectId == Guid.Empty))
+        {
+            throw new InvalidOperationException("Each allocation must include a valid project.");
+        }
+
+        if (rawAllocations.Any(x => x is not null && x.Amount < 0m))
+        {
+            throw new InvalidOperationException("Allocation amounts cannot be negative.");
+        }
+
+        var allocations = rawAllocations
             .Where(x => x is not null && x.Amount > 0m)
             .Select(x => new ClientPaymentAllocationLineDto
             {
@@ -292,16 +311,6 @@ public sealed class PaymentService : IPaymentService
         if (allocations.Count == 0)
         {
             throw new InvalidOperationException("At least one allocation is required.");
-        }
-
-        if (allocations.Any(x => x.ProjectId == Guid.Empty))
-        {
-            throw new InvalidOperationException("Each allocation must include a valid project.");
-        }
-
-        if (allocations.Any(x => x.Amount <= 0m))
-        {
-            throw new InvalidOperationException("Allocation amounts must be greater than zero.");
         }
 
         var duplicatedProjectIds = allocations
@@ -489,5 +498,61 @@ public sealed class PaymentService : IPaymentService
         return _currentUser.UserId
             ?? throw new InvalidOperationException(
                 "Current user is not authenticated.");
+    }
+
+    public async Task VoidAsync(Guid paymentId, CancellationToken cancellationToken = default)
+    {
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
+
+        var payment = await _dbContext.Set<Payment>()
+            .FirstOrDefaultAsync(x => x.Id == paymentId && x.OrganizationId == organizationId, cancellationToken);
+
+        if (payment is null)
+        {
+            throw new NotFoundException("Payment not found.");
+        }
+
+        var ledger = await _dbContext.LedgerEntries
+            .FirstOrDefaultAsync(x =>
+                x.OrganizationId == organizationId &&
+                x.PaymentReference == payment.PaymentReference &&
+                x.ProjectId == payment.ProjectId,
+                cancellationToken);
+
+        if (ledger is null)
+        {
+            throw new InvalidOperationException("Ledger entry not found.");
+        }
+
+        if (ledger.IsVoided)
+        {
+            throw new InvalidOperationException("Payment already voided.");
+        }
+
+        var now = DateTime.UtcNow;
+        var userId = GetRequiredUserId();
+
+        var reversal = new LedgerEntry
+        {
+            Id = Guid.NewGuid(),
+            OrganizationId = ledger.OrganizationId,
+            ClientId = ledger.ClientId,
+            ProjectId = ledger.ProjectId,
+            Type = LedgerEntryType.Payment,
+            Amount = -ledger.Amount,
+            OccurredAt = now,
+            Notes = $"Void of payment {ledger.PaymentReference}",
+            PaymentReference = ledger.PaymentReference,
+            IsVoided = false,
+            CreatedAt = now,
+            CreatedBy = userId
+        };
+
+        ledger.IsVoided = true;
+        ledger.VoidedAt = now;
+
+        _dbContext.LedgerEntries.Add(reversal);
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

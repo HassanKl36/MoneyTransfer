@@ -4,53 +4,72 @@
     ViewData["Title"] = "Register";
 }
 
-<h2>Register Organization</h2>
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="page-header text-center">
+            <h1>Register Organization</h1>
+            <p>Create a new organization and its initial admin account.</p>
+        </div>
 
-<form asp-action="Register" method="post">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <form asp-action="Register" method="post">
+            <div class="section-card">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
 
-    <div>
-        <label asp-for="OrganizationName"></label>
-        <input asp-for="OrganizationName" />
-        <span asp-validation-for="OrganizationName" class="text-danger"></span>
+                <h4 class="mb-3">Organization</h4>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label asp-for="OrganizationName" class="form-label"></label>
+                        <input asp-for="OrganizationName" class="form-control" />
+                        <span asp-validation-for="OrganizationName" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="OrganizationCode" class="form-label"></label>
+                        <input asp-for="OrganizationCode" class="form-control" />
+                        <span asp-validation-for="OrganizationCode" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <h4 class="mb-3">Admin Account</h4>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="FullName" class="form-label"></label>
+                        <input asp-for="FullName" class="form-control" />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Password" class="form-label"></label>
+                        <input asp-for="Password" type="password" class="form-control" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="ConfirmPassword" class="form-label"></label>
+                        <input asp-for="ConfirmPassword" type="password" class="form-control" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="page-actions mt-4 mb-0">
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </div>
+            </div>
+        </form>
+
+        <div class="text-center">
+            <p class="mb-0">
+                Already have an account?
+                <a asp-action="Login">Login</a>
+            </p>
+        </div>
     </div>
-
-    <div>
-        <label asp-for="OrganizationCode"></label>
-        <input asp-for="OrganizationCode" />
-        <span asp-validation-for="OrganizationCode" class="text-danger"></span>
-    </div>
-
-    <div>
-        <label asp-for="FullName"></label>
-        <input asp-for="FullName" />
-        <span asp-validation-for="FullName" class="text-danger"></span>
-    </div>
-
-    <div>
-        <label asp-for="Email"></label>
-        <input asp-for="Email" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
-
-    <div>
-        <label asp-for="Password"></label>
-        <input asp-for="Password" />
-        <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
-
-    <div>
-        <label asp-for="ConfirmPassword"></label>
-        <input asp-for="ConfirmPassword" />
-        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-    </div>
-
-    <div style="margin-top:15px;">
-        <button type="submit">Register</button>
-    </div>
-</form>
-
-<p>
-    Already have an account?
-    <a asp-action="Login">Login</a>
-</p>
+</div>

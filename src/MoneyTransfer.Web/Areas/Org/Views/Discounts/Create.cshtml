@@ -2,42 +2,57 @@
 
 @{
     ViewData["Title"] = "Create Discount";
+    ViewData["BackUrl"] = ViewBag.BackUrl as string;
+    ViewData["BackText"] = ViewBag.BackText as string ?? "Back";
 }
 
-<h1>Create Discount</h1>
+<div class="page-header">
+    <h1>Create Discount</h1>
+    <p>Add a discount entry for the selected project.</p>
+</div>
 
 <form asp-area="Org" asp-controller="Discounts" asp-action="Create" method="post">
     @Html.AntiForgeryToken()
+    <input type="hidden" name="backUrl" value="@(ViewBag.BackUrl as string)" />
+    <input type="hidden" name="backText" value="@(ViewBag.BackText as string)" />
     <input asp-for="ProjectId" type="hidden" />
 
-    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <div class="section-card">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
 
-    <div class="mb-3">
-        <label asp-for="Amount" class="form-label"></label>
-        <input asp-for="Amount" class="form-control" />
-        <span asp-validation-for="Amount" class="text-danger"></span>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="Amount" class="form-label"></label>
+                <input asp-for="Amount" class="form-control" />
+                <span asp-validation-for="Amount" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="Date" class="form-label"></label>
+                <input asp-for="Date" type="date" class="form-control" />
+                <span asp-validation-for="Date" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Reason" class="form-label"></label>
+                <textarea asp-for="Reason" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Reason" class="text-danger"></span>
+            </div>
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label asp-for="Date" class="form-label"></label>
-        <input asp-for="Date" type="date" class="form-control" />
-        <span asp-validation-for="Date" class="text-danger"></span>
+    <div class="page-actions">
+        <button type="submit" class="btn btn-primary">Save Discount</button>
+        <a asp-area="Org"
+           asp-controller="Discounts"
+           asp-action="Index"
+           asp-route-projectId="@Model.ProjectId"
+           asp-route-backUrl="@(ViewBag.BackUrl as string)"
+           asp-route-backText="@(ViewBag.BackText as string)"
+           class="btn btn-outline-secondary">
+            Cancel
+        </a>
     </div>
-
-    <div class="mb-3">
-        <label asp-for="Reason" class="form-label"></label>
-        <textarea asp-for="Reason" class="form-control" rows="4"></textarea>
-        <span asp-validation-for="Reason" class="text-danger"></span>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a asp-area="Org"
-       asp-controller="Discounts"
-       asp-action="Index"
-       asp-route-projectId="@Model.ProjectId"
-       class="btn btn-secondary">
-        Cancel
-    </a>
 </form>
 
 @section Scripts {

@@ -45,6 +45,8 @@ public sealed class DiscountService : IDiscountService
             .AsNoTracking()
             .Where(x => x.ProjectId == projectId && x.OrganizationId == orgId)
             .OrderByDescending(x => x.Date)
+            .ThenByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id)
             .Select(x => new DiscountListItemDto
             {
                 Id = x.Id,
@@ -53,7 +55,12 @@ public sealed class DiscountService : IDiscountService
                 Amount = x.Amount,
                 Date = x.Date,
                 Reason = x.Reason,
-                CreatedAt = x.CreatedAt
+                CreatedAt = x.CreatedAt,
+                IsVoided = _dbContext.LedgerEntries.Any(l =>
+                    l.OrganizationId == orgId &&
+                    l.DiscountReference == x.DiscountReference &&
+                    l.Type == LedgerEntryType.Discount &&
+                    l.IsVoided)
             })
             .ToListAsync(cancellationToken);
     }
@@ -136,7 +143,7 @@ public sealed class DiscountService : IDiscountService
         }
 
         var currentBalance = await _dbContext.LedgerEntries
-            .Where(x => x.ProjectId == dto.ProjectId && x.OrganizationId == orgId && !x.IsVoided)
+            .Where(x => x.ProjectId == dto.ProjectId && x.OrganizationId == orgId)
             .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
 
         var resultingBalance = currentBalance - dto.Amount;
@@ -179,12 +186,74 @@ public sealed class DiscountService : IDiscountService
             PaymentReference = null,
             DiscountReference = reference,
             IsVoided = false,
+            VoidedAt = null,
             CreatedAt = now,
             CreatedBy = userId
         };
 
         _dbContext.Discounts.Add(discount);
         _dbContext.LedgerEntries.Add(ledger);
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task VoidAsync(Guid discountId, CancellationToken cancellationToken = default)
+    {
+        var organizationId = await _currentOrganization.GetRequiredOrganizationIdAsync(cancellationToken);
+
+        var discount = await _dbContext.Discounts
+            .FirstOrDefaultAsync(
+                x => x.Id == discountId && x.OrganizationId == organizationId,
+                cancellationToken);
+
+        if (discount is null)
+        {
+            throw new NotFoundException("Discount not found.");
+        }
+
+        var ledger = await _dbContext.LedgerEntries
+            .FirstOrDefaultAsync(
+                x => x.OrganizationId == organizationId &&
+                     x.DiscountReference == discount.DiscountReference &&
+                     x.Type == LedgerEntryType.Discount,
+                cancellationToken);
+
+        if (ledger is null)
+        {
+            throw new InvalidOperationException("Ledger entry not found.");
+        }
+
+        if (ledger.IsVoided)
+        {
+            throw new InvalidOperationException("Discount already voided.");
+        }
+
+        var now = DateTime.UtcNow;
+        var userId = GetRequiredUserId();
+
+        var reversal = new LedgerEntry
+        {
+            Id = Guid.NewGuid(),
+            OrganizationId = ledger.OrganizationId,
+            ClientId = ledger.ClientId,
+            ProjectId = ledger.ProjectId,
+            Type = LedgerEntryType.Discount,
+            Amount = -ledger.Amount,
+            OccurredAt = now,
+            Notes = $"Void of discount {ledger.DiscountReference}",
+            InvoiceNumber = null,
+            PaymentReference = null,
+            DiscountReference = ledger.DiscountReference,
+            IsVoided = false,
+            VoidedAt = null,
+            CreatedAt = now,
+            CreatedBy = userId
+        };
+
+        ledger.IsVoided = true;
+        ledger.VoidedAt = now;
+
+        _dbContext.LedgerEntries.Add(reversal);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
     }

@@ -157,6 +157,11 @@ public class AccountController : Controller
             claims.Add(new Claim("client_id", user.ClientId.Value.ToString()));
         }
 
+        if (!string.IsNullOrWhiteSpace(user.FullName))
+        {
+            claims.Add(new Claim("full_name", user.FullName));
+        }
+
         await _signInManager.SignInWithClaimsAsync(user, isPersistent: false, claims);
     }
 }

@@ -10,7 +10,8 @@ public sealed class ClientPaymentCreateDto
     public string ClientName { get; set; } = string.Empty;
 
     [Required]
-    [Range(typeof(decimal), "0.01", "79228162514264337593543950335")]
+    [Range(typeof(decimal), "0.01", "79228162514264337593543950335",
+        ErrorMessage = "Total amount must be greater than 0.")]
     public decimal TotalAmount { get; set; }
 
     [Required]

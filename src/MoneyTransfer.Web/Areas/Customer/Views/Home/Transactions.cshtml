@@ -1,97 +1,143 @@
 ﻿@model MoneyTransfer.Application.Services.Clients.ClientLedgerDetailsDto
 @using MoneyTransfer.Domain.Enums
 
-<h2>Transactions</h2>
+@{
+    ViewData["Title"] = "Transactions";
+    ViewData["BackUrl"] = Url.Action("Index", "Home", new { area = "Customer" });
+    ViewData["BackText"] = "Back to Customer Portal";
+    ViewData["NavbarClientName"] = Model.ClientName;
+}
 
-<p>
-    <strong>Total Balance:</strong> @Model.TotalBalance <br />
-    <strong>As of:</strong> @Model.AsOfDate
-</p>
-
-<form method="get" class="mb-3">
-    <div>
-        <label>From Date:</label>
-        <input type="date" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" />
-    </div>
-
-    <div>
-        <label>To Date:</label>
-        <input type="date" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" />
-    </div>
-
-    <div>
-        <label>Project:</label>
-        <select name="projectId">
-            <option value="">All</option>
-            @foreach (var p in Model.Projects)
-            {
-                <option value="@p.ProjectId" selected="@(Model.ProjectId == p.ProjectId)">
-                    @p.ProjectName
-                </option>
-            }
-        </select>
-    </div>
-
-    <div>
-        <label>Transaction Type:</label>
-        <select name="transactionType">
-            <option value="">All</option>
-            @foreach (var type in Enum.GetValues<LedgerEntryType>())
-            {
-                <option value="@type" selected="@(Model.TransactionType == type)">
-                    @type
-                </option>
-            }
-        </select>
-    </div>
-
-    <button type="submit">Filter</button>
-</form>
-
-<div class="mb-3">
-    <a asp-action="ExportPdf"
-       asp-route-fromDate="@Model.FromDate"
-       asp-route-toDate="@Model.ToDate"
-       asp-route-projectId="@Model.ProjectId"
-       asp-route-transactionType="@Model.TransactionType"
-       class="btn btn-secondary">
-        Export PDF
-    </a>
-
-    <a asp-action="ExportExcel"
-       asp-route-fromDate="@Model.FromDate"
-       asp-route-toDate="@Model.ToDate"
-       asp-route-projectId="@Model.ProjectId"
-       asp-route-transactionType="@Model.TransactionType"
-       class="btn btn-secondary">
-        Export Excel
-    </a>
+<div class="page-header">
+    <h1>Transactions</h1>
+    <p>Filter and review your transaction history with running balance visibility.</p>
 </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Project</th>
-            <th>Type</th>
-            <th>Amount</th>
-            <th>Running Balance</th>
-            <th>Reference</th>
-            <th>Notes</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var entry in Model.Entries)
-        {
-            <tr>
-                <td>@entry.OccurredAt.ToString("dd/MM/yyyy")</td>
-                <td>@entry.ProjectName</td>
-                <td>@entry.Type</td>
-                <td>@entry.Amount</td>
-                <td>@entry.RunningBalance</td>
-                <td>@entry.Reference</td>
-                <td>@entry.Notes</td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="summary-card">
+    <div class="summary-grid">
+        <div class="summary-item">
+            <span class="summary-label">Total Balance</span>
+            <span class="summary-value">$@Model.TotalBalance.ToString("0.00")</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">As Of (UTC)</span>
+            <span class="summary-value">@Model.AsOfDate.ToString("dd/MM/yyyy HH:mm")</span>
+        </div>
+    </div>
+</div>
+
+<div class="section-card">
+    <form method="get">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label for="fromDate" class="form-label">From Date</label>
+                <input id="fromDate"
+                       type="date"
+                       name="fromDate"
+                       value="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-3">
+                <label for="toDate" class="form-label">To Date</label>
+                <input id="toDate"
+                       type="date"
+                       name="toDate"
+                       value="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-3">
+                <label for="projectId" class="form-label">Project</label>
+                <select id="projectId" name="projectId" class="form-select">
+                    <option value="">All</option>
+                    @foreach (var p in Model.Projects)
+                    {
+                        <option value="@p.ProjectId" selected="@(Model.ProjectId == p.ProjectId)">
+                            @p.ProjectName
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="transactionType" class="form-label">Transaction Type</label>
+                <select id="transactionType" name="transactionType" class="form-select">
+                    <option value="">All</option>
+                    @foreach (var type in Enum.GetValues<LedgerEntryType>())
+                    {
+                        <option value="@type" selected="@(Model.TransactionType == type)">
+                            @type
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-12 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a asp-action="Transactions" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="section-card">
+    <div class="page-actions">
+        <a asp-action="ExportPdf"
+           asp-route-fromDate="@Model.FromDate"
+           asp-route-toDate="@Model.ToDate"
+           asp-route-projectId="@Model.ProjectId"
+           asp-route-transactionType="@Model.TransactionType"
+           class="btn btn-outline-secondary">
+            Export PDF
+        </a>
+
+        <a asp-action="ExportExcel"
+           asp-route-fromDate="@Model.FromDate"
+           asp-route-toDate="@Model.ToDate"
+           asp-route-projectId="@Model.ProjectId"
+           asp-route-transactionType="@Model.TransactionType"
+           class="btn btn-outline-secondary">
+            Export Excel
+        </a>
+    </div>
+
+    @if (Model.Entries.Count == 0)
+    {
+        <div class="empty-state">
+            No transactions were found for the selected filters.
+        </div>
+    }
+    else
+    {
+        <div class="table-container">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Project</th>
+                        <th>Type</th>
+                        <th class="text-end">Amount</th>
+                        <th class="text-end">Running Balance</th>
+                        <th>Reference</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in Model.Entries)
+                    {
+                        <tr>
+                            <td>@entry.OccurredAt.ToString("dd/MM/yyyy")</td>
+                            <td>@entry.ProjectName</td>
+                            <td>@entry.Type</td>
+                            <td class="text-end">$@entry.Amount.ToString("0.00")</td>
+                            <td class="text-end">$@entry.RunningBalance.ToString("0.00")</td>
+                            <td>@entry.Reference</td>
+                            <td>@entry.Notes</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

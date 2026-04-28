@@ -4,6 +4,8 @@ namespace MoneyTransfer.Application.Services.Clients;
 
 public sealed class ClientLedgerDetailsDto
 {
+    public string ClientName { get; set; } = string.Empty;
+
     public decimal TotalBalance { get; set; }
 
     public DateTime AsOfDate { get; set; }

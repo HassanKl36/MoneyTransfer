@@ -2,62 +2,80 @@
 
 @{
     ViewData["Title"] = "Create Client";
+    ViewData["BackUrl"] = Url.Action("Index", "Clients", new { area = "Org" });
+    ViewData["BackText"] = "Back to Clients";
 }
 
-<h1>Create Client</h1>
+<div class="page-header">
+    <h1>Create Client</h1>
+    <p>Add a new client and optionally create a customer portal account.</p>
+</div>
 
 <form asp-area="Org" asp-controller="Clients" asp-action="Create" method="post">
     @Html.AntiForgeryToken()
 
-    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <div class="section-card">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
 
-    <div class="mb-3">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
+        <h4 class="mb-3">Client Information</h4>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="PhoneNumber" class="form-label"></label>
+                <input asp-for="PhoneNumber" class="form-control" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label asp-for="PhoneNumber" class="form-label"></label>
-        <input asp-for="PhoneNumber" class="form-control" />
-        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+    <div class="section-card">
+        <h4 class="mb-3">Portal Account</h4>
+        <p class="text-muted mb-3">Enable this only if the client should be able to sign in to the customer portal.</p>
+
+        <div class="form-check mb-3">
+            <input asp-for="CreatePortalAccount" class="form-check-input" />
+            <label asp-for="CreatePortalAccount" class="form-check-label">
+                Create portal account
+            </label>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="PortalUsername" class="form-label">Username</label>
+                <input asp-for="PortalUsername" class="form-control" />
+                <span asp-validation-for="PortalUsername" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="PortalPassword" class="form-label">Password</label>
+                <input asp-for="PortalPassword" type="password" class="form-control" />
+                <span asp-validation-for="PortalPassword" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="ConfirmPortalPassword" class="form-label">Confirm Password</label>
+                <input asp-for="ConfirmPortalPassword" type="password" class="form-control" />
+                <span asp-validation-for="ConfirmPortalPassword" class="text-danger"></span>
+            </div>
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label asp-for="Email" class="form-label"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
+    <div class="page-actions">
+        <button type="submit" class="btn btn-primary">Save Client</button>
+        <a asp-area="Org" asp-controller="Clients" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
     </div>
-
-    <hr />
-
-    <div class="form-check mb-3">
-        <input asp-for="CreatePortalAccount" class="form-check-input" />
-        <label asp-for="CreatePortalAccount" class="form-check-label">
-            Create portal account
-        </label>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="PortalUsername" class="form-label">Username</label>
-        <input asp-for="PortalUsername" class="form-control" />
-        <span asp-validation-for="PortalUsername" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="PortalPassword" class="form-label">Password</label>
-        <input asp-for="PortalPassword" class="form-control" />
-        <span asp-validation-for="PortalPassword" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="ConfirmPortalPassword" class="form-label">Confirm Password</label>
-        <input asp-for="ConfirmPortalPassword" class="form-control" />
-        <span asp-validation-for="ConfirmPortalPassword" class="text-danger"></span>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a asp-area="Org" asp-controller="Clients" asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>
 
 @section Scripts {

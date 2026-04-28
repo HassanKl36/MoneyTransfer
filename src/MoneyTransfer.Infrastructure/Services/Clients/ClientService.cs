@@ -116,7 +116,8 @@ public sealed class ClientService : IClientService
                 c.Status == ClientStatus.Active)
             .Select(c => new
             {
-                c.Id
+                c.Id,
+                c.Name
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -129,8 +130,7 @@ public sealed class ClientService : IClientService
             .AsNoTracking()
             .Where(x =>
                 x.OrganizationId == organizationId &&
-                x.ClientId == clientId &&
-                !x.IsVoided)
+                x.ClientId == clientId )
             .OrderBy(x => x.OccurredAt)
             .ThenBy(x => x.CreatedAt)
             .ThenBy(x => x.Id)
@@ -221,6 +221,7 @@ public sealed class ClientService : IClientService
 
         return new ClientLedgerDetailsDto
         {
+            ClientName = client.Name,
             TotalBalance = overview.TotalBalance,
             AsOfDate = DateTime.UtcNow,
             FromDate = fromDate,
@@ -502,8 +503,7 @@ public sealed class ClientService : IClientService
             .AsNoTracking()
             .Where(x =>
                 x.OrganizationId == organizationId &&
-                x.ClientId == clientId &&
-                !x.IsVoided);
+                x.ClientId == clientId);
 
         if (projectId.HasValue)
             baseQuery = baseQuery.Where(x => x.ProjectId == projectId.Value);
@@ -641,6 +641,7 @@ public sealed class ClientService : IClientService
             {
                 Id = c.Id,
                 Name = c.Name,
+                OrganizationName = c.Organization != null ? c.Organization.Name : string.Empty,
                 PhoneNumber = c.PhoneNumber,
                 Email = c.Email,
                 AsOfDate = DateTime.UtcNow
@@ -671,8 +672,7 @@ public sealed class ClientService : IClientService
             .AsNoTracking()
             .Where(x =>
                 x.OrganizationId == organizationId &&
-                x.ClientId == clientId &&
-                !x.IsVoided)
+                x.ClientId == clientId)
             .GroupBy(x => x.ProjectId)
             .Select(g => new
             {

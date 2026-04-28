@@ -1,27 +1,65 @@
-﻿@using System.Security.Claims
+﻿@{
+    ViewData["Title"] = "Organization Portal";
+}
 
-<h2>Organization Portal</h2>
+<div class="page-header">
+    <h1>@ViewData["OrganizationName"]</h1>
+    <p class="mb-0">Organization Portal</p>
+</div>
 
-<p>You are logged into the organization portal.</p>
+<div class="row g-4">
+    <div class="col-md-6 col-xl-4">
+        <div class="section-card h-100">
+            <h5 class="mb-2">Clients</h5>
+            <p class="text-muted mb-3">View clients, open client details, and manage account access and balances.</p>
+            <a asp-area="Org"
+               asp-controller="Clients"
+               asp-action="Index"
+               class="btn btn-primary">
+                Open Clients
+            </a>
+        </div>
+    </div>
 
-<div style="margin-top:20px;">
-    <a asp-area="Org" asp-controller="Clients" asp-action="Index" class="btn btn-primary">
-        Clients
-    </a>
-
-    <a asp-area="Org" asp-controller="Projects" asp-action="Index" class="btn btn-primary" style="margin-left:10px;">
-        Projects
-    </a>
+    <div class="col-md-6 col-xl-4">
+        <div class="section-card h-100">
+            <h5 class="mb-2">Projects</h5>
+            <p class="text-muted mb-3">Browse projects, review ledgers, and access invoices, payments, and discounts.</p>
+            <a asp-area="Org"
+               asp-controller="Projects"
+               asp-action="Index"
+               class="btn btn-primary">
+                Open Projects
+            </a>
+        </div>
+    </div>
 
     @if (User.IsInRole("Admin"))
     {
-        <a asp-area="Org" asp-controller="OrgUsers" asp-action="Index" class="btn btn-primary" style="margin-left:10px;">
-            Users
-        </a>
+        <div class="col-md-6 col-xl-4">
+            <div class="section-card h-100">
+                <h5 class="mb-2">Users</h5>
+                <p class="text-muted mb-3">Manage organization users and review access roles for the portal.</p>
+                <a asp-area="Org"
+                   asp-controller="OrgUsers"
+                   asp-action="Index"
+                   class="btn btn-primary">
+                    Open Users
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-4">
+            <div class="section-card h-100">
+                <h5 class="mb-2">API Keys</h5>
+                <p class="text-muted mb-3">Generate or revoke the organization API key used for external automation.</p>
+                <a asp-area="Org"
+                   asp-controller="ApiKeys"
+                   asp-action="Index"
+                   class="btn btn-primary">
+                    Manage API Keys
+                </a>
+            </div>
+        </div>
     }
 </div>
-
-<form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
-    @Html.AntiForgeryToken()
-    <button type="submit">Logout</button>
-</form>

@@ -8,6 +8,8 @@ using MoneyTransfer.Application.Services.OrgUsers;
 using MoneyTransfer.Application.Services.Payments;
 using MoneyTransfer.Application.Services.Projects;
 using MoneyTransfer.Application.Services.Discounts;
+using MoneyTransfer.Application.Services.Adjustments;
+using MoneyTransfer.Application.Services.ApiKeys;
 using MoneyTransfer.Infrastructure.Data;
 using MoneyTransfer.Infrastructure.Identity;
 using MoneyTransfer.Infrastructure.Services.Authentication;
@@ -18,7 +20,9 @@ using MoneyTransfer.Infrastructure.Services.OrgUsers;
 using MoneyTransfer.Infrastructure.Services.Payments;
 using MoneyTransfer.Infrastructure.Services.Projects;
 using MoneyTransfer.Infrastructure.Services.Discounts;
+using MoneyTransfer.Infrastructure.Services.Adjustments;
 using MoneyTransfer.Infrastructure.Services.Exports;
+using MoneyTransfer.Infrastructure.Services.ApiKeys;
 using MoneyTransfer.Web.Infrastructure;
 using MoneyTransfer.Web.Services;
 using MoneyTransfer.Application.Common.Models;
@@ -70,6 +74,7 @@ builder.Services.Configure<ApiKeyOptions>(
 
 builder.Services.AddScoped<IRequestContextOverride, RequestContextOverride>();
 builder.Services.AddScoped<IApiKeyHasher, ApiKeyHasher>();
+builder.Services.AddScoped<IApiKeyManagementService, ApiKeyManagementService>();
 
 builder.Services.AddScoped<ICurrentOrganization, CurrentOrganization>();
 builder.Services.AddScoped<ICurrentClient, CurrentClient>();
@@ -85,6 +90,7 @@ builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IOrgUserService, OrgUserService>();
 builder.Services.AddScoped<IStatementPdfRenderer, StatementPdfRenderer>();
 builder.Services.AddScoped<IStatementExcelRenderer, StatementExcelRenderer>();
+builder.Services.AddScoped<IAdjustmentService, AdjustmentService>();
 
 var app = builder.Build();
 

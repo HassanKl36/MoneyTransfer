@@ -1,6 +1,38 @@
 ﻿@{
     ViewData["Title"] = "Privacy Policy";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="page-header">
+    <h1>@ViewData["Title"]</h1>
+    <p>Review the privacy information for this application.</p>
+</div>
+
+<div class="section-card">
+    <p>
+        MoneyTransfer is intended for managing organization, project, client, and customer financial information within a role-based web application environment.
+        The system may process account details, contact information, project records, invoice history, payment activity, discounts, and ledger-based balance data
+        in order to provide portal access, financial tracking, and statement generation features.
+    </p>
+
+    <p>
+        Access to protected areas of the application is limited to authenticated users. Organization users can access data associated with their organization,
+        while customer users can access only the information made available through their assigned customer portal account.
+        Access restrictions are enforced through role-based authorization and tenant-specific data isolation.
+    </p>
+
+    <p>
+        Information entered into the system should be handled with care and shared only with authorized individuals.
+        Exported PDF and Excel statements may contain sensitive financial details, including balances, references, transaction notes, and client or project activity,
+        and should therefore be stored, transmitted, and reviewed responsibly.
+    </p>
+
+    <p>
+        The application may also retain operational data required for normal system use, such as audit-related metadata, transaction timestamps, and user-account associations,
+        to support accurate reporting, accountability, and secure access management across organization and customer workflows.
+    </p>
+
+    <p class="mb-0">
+        This privacy notice is provided as a general application-level policy for the current implementation.
+        It can be replaced or expanded later with a formal legal or organization-specific privacy policy if required by your deployment, client agreements, or regulatory obligations.
+    </p>
+</div>

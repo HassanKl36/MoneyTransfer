@@ -15,4 +15,5 @@ public sealed class DiscountListItemDto
     public string Reason { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; }
+    public bool IsVoided { get; set; }
 }

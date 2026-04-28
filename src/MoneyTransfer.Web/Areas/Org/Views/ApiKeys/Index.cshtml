@@ -1,0 +1,128 @@
+﻿@model MoneyTransfer.Application.Services.ApiKeys.ApiKeyDetailsDto?
+
+@{
+    ViewData["Title"] = "API Key Management";
+    ViewData["BackUrl"] = Url.Action("Index", "Home", new { area = "Org" });
+    ViewData["BackText"] = "Back to Organization Portal";
+
+    var generatedApiKey = TempData["GeneratedApiKey"] as string;
+    var generatedApiKeyPrefix = TempData["GeneratedApiKeyPrefix"] as string;
+    var successMessage = TempData["SuccessMessage"] as string;
+    var errorMessage = TempData["ErrorMessage"] as string;
+}
+
+<div class="page-header">
+    <h1>API Key Management</h1>
+    <p class="mb-0">Generate and revoke the API key used by external automation tools.</p>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success">
+        @successMessage
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(generatedApiKey))
+{
+    <div class="alert alert-warning">
+        <h5 class="alert-heading">Copy this API key now</h5>
+        <p>This key is shown only once. It is not stored in plain text and cannot be recovered later.</p>
+
+        <label class="form-label fw-semibold">New API Key</label>
+        <textarea class="form-control font-monospace" rows="3" readonly>@generatedApiKey</textarea>
+
+        @if (!string.IsNullOrWhiteSpace(generatedApiKeyPrefix))
+        {
+            <p class="mt-2 mb-0">
+                Prefix: <strong>@generatedApiKeyPrefix</strong>
+            </p>
+        }
+    </div>
+}
+
+<div class="section-card">
+    <h5 class="mb-3">Current API Key</h5>
+
+    @if (Model is null)
+    {
+        <div class="alert alert-info">
+            No API key has been generated for this organization yet.
+        </div>
+
+        <form asp-area="Org"
+              asp-controller="ApiKeys"
+              asp-action="Generate"
+              method="post">
+            @Html.AntiForgeryToken()
+
+            <button type="submit" class="btn btn-primary">
+                Generate API Key
+            </button>
+        </form>
+    }
+    else
+    {
+        <dl class="row mb-4">
+            <dt class="col-sm-3">Prefix</dt>
+            <dd class="col-sm-9">@Model.KeyPrefix</dd>
+
+            <dt class="col-sm-3">Created</dt>
+            <dd class="col-sm-9">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm") UTC</dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">
+                @if (Model.IsActive)
+                {
+                    <span class="badge bg-success">Active</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Revoked</span>
+                }
+            </dd>
+
+            @if (Model.RevokedAt is not null)
+            {
+                <dt class="col-sm-3">Revoked</dt>
+                <dd class="col-sm-9">@Model.RevokedAt.Value.ToString("yyyy-MM-dd HH:mm") UTC</dd>
+            }
+        </dl>
+
+        @if (Model.IsActive)
+        {
+            <form asp-area="Org"
+                  asp-controller="ApiKeys"
+                  asp-action="Revoke"
+                  asp-route-id="@Model.Id"
+                  method="post"
+                  onsubmit="return confirm('Are you sure you want to revoke this API key? Existing integrations using it will stop working.');">
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="btn btn-danger">
+                    Revoke API Key
+                </button>
+            </form>
+        }
+        else
+        {
+            <form asp-area="Org"
+                  asp-controller="ApiKeys"
+                  asp-action="Generate"
+                  method="post">
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="btn btn-primary">
+                    Generate New API Key
+                </button>
+            </form>
+        }
+    }
+</div>

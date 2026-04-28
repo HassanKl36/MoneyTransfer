@@ -13,4 +13,9 @@ public interface IInvoiceService
     Task<InvoiceCreateResultDto> CreateAsync(
         InvoiceCreateDto dto,
         CancellationToken cancellationToken = default);
+
+    Task VoidAsync(
+        Guid invoiceId, 
+        CancellationToken cancellationToken = default);
+
 }

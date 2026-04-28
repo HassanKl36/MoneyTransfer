@@ -17,13 +17,20 @@ public sealed class PaymentsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(Guid projectId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(
+        Guid projectId,
+        string? backUrl,
+        string? backText,
+        CancellationToken cancellationToken)
     {
         try
         {
             var payments = await _paymentService.GetByProjectAsync(projectId, cancellationToken);
 
             ViewBag.ProjectId = projectId;
+            ViewBag.BackUrl = backUrl;
+            ViewBag.BackText = backText;
+
             return View(payments);
         }
         catch (InvalidOperationException)
@@ -33,11 +40,19 @@ public sealed class PaymentsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Create(Guid projectId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create(
+        Guid projectId,
+        string? backUrl,
+        string? backText,
+        CancellationToken cancellationToken)
     {
         try
         {
             var model = await _paymentService.InitializeCreateAsync(projectId, cancellationToken);
+
+            ViewBag.BackUrl = backUrl;
+            ViewBag.BackText = backText;
+
             return View(model);
         }
         catch (NotFoundException)
@@ -47,23 +62,35 @@ public sealed class PaymentsController : Controller
         catch (InvalidOperationException ex)
         {
             TempData["ErrorMessage"] = ex.Message;
-            return RedirectToAction(nameof(Index), new { projectId });
+            return RedirectToAction(nameof(Index), new { projectId, backUrl, backText });
         }
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(PaymentCreateDto model, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create(
+        PaymentCreateDto model,
+        string? backUrl,
+        string? backText,
+        CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
+            ViewBag.BackUrl = backUrl;
+            ViewBag.BackText = backText;
             return View(model);
         }
 
         try
         {
             await _paymentService.CreateAsync(model, cancellationToken);
-            return RedirectToAction(nameof(Index), new { projectId = model.ProjectId });
+
+            return RedirectToAction(nameof(Index), new
+            {
+                projectId = model.ProjectId,
+                backUrl,
+                backText
+            });
         }
         catch (NotFoundException)
         {
@@ -72,8 +99,42 @@ public sealed class PaymentsController : Controller
         catch (InvalidOperationException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
+            ViewBag.BackUrl = backUrl;
+            ViewBag.BackText = backText;
             return View(model);
         }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Void(
+        Guid id,
+        Guid projectId,
+        string? backUrl,
+        string? backText,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _paymentService.VoidAsync(id, cancellationToken);
+            TempData["SuccessMessage"] = "Payment voided successfully.";
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Index), new
+        {
+            projectId,
+            backUrl,
+            backText
+        });
     }
 
     [HttpGet]

@@ -15,8 +15,8 @@ public sealed class StatementExcelRenderer : IStatementExcelRenderer
         ws.Cell(row++, 1).Value = $"Statement - {statement.ClientName}";
         ws.Cell(row++, 1).Value = $"From: {statement.FromDate:dd/MM/yyyy}";
         ws.Cell(row++, 1).Value = $"To: {statement.ToDate:dd/MM/yyyy}";
-        ws.Cell(row++, 1).Value = $"Opening Balance: {statement.Summary.OpeningBalance}";
-        ws.Cell(row++, 1).Value = $"Closing Balance: {statement.Summary.ClosingBalance}";
+        ws.Cell(row++, 1).Value = $"Opening Balance: ${statement.Summary.OpeningBalance:0.00}";
+        ws.Cell(row++, 1).Value = $"Closing Balance: ${statement.Summary.ClosingBalance:0.00}";
 
         row++;
 
@@ -25,7 +25,10 @@ public sealed class StatementExcelRenderer : IStatementExcelRenderer
         ws.Cell(row, 3).Value = "Type";
         ws.Cell(row, 4).Value = "Amount";
         ws.Cell(row, 5).Value = "Running Balance";
+        ws.Cell(row, 6).Value = "Reference";
+        ws.Cell(row, 7).Value = "Notes";
 
+        var headerRow = row;
         row++;
 
         foreach (var e in statement.Entries)
@@ -35,11 +38,17 @@ public sealed class StatementExcelRenderer : IStatementExcelRenderer
             ws.Cell(row, 3).Value = e.Type.ToString();
             ws.Cell(row, 4).Value = e.Amount;
             ws.Cell(row, 5).Value = e.RunningBalance;
+            ws.Cell(row, 6).Value = e.Reference ?? string.Empty;
+            ws.Cell(row, 7).Value = e.Notes ?? string.Empty;
             row++;
         }
 
+        ws.Row(headerRow).Style.Font.Bold = true;
+
         ws.Column(1).Style.DateFormat.Format = "dd/MM/yyyy";
         ws.Column(1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+        ws.Column(4).Style.NumberFormat.Format = "$#,##0.00;-$#,##0.00";
+        ws.Column(5).Style.NumberFormat.Format = "$#,##0.00;-$#,##0.00";
 
         ws.Columns().AdjustToContents();
 

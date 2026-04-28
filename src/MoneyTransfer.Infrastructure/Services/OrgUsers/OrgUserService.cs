@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using MoneyTransfer.Application.Common.Interfaces;
 using MoneyTransfer.Application.Services.OrgUsers;
+using MoneyTransfer.Infrastructure.Data;
 using MoneyTransfer.Infrastructure.Identity;
 
 namespace MoneyTransfer.Infrastructure.Services.OrgUsers;
@@ -10,13 +11,16 @@ public sealed class OrgUserService : IOrgUserService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ICurrentOrganization _currentOrganization;
+    private readonly MoneyTransferDbContext _dbContext;
 
     public OrgUserService(
         UserManager<ApplicationUser> userManager,
-        ICurrentOrganization currentOrganization)
+        ICurrentOrganization currentOrganization,
+        MoneyTransferDbContext dbContext)
     {
         _userManager = userManager;
         _currentOrganization = currentOrganization;
+        _dbContext = dbContext;
     }
 
     public async Task<IReadOnlyList<OrgUserListItemDto>> GetUsersAsync(
@@ -33,18 +37,38 @@ public sealed class OrgUserService : IOrgUserService
             .Where(u => u.OrganizationId == organizationId)
             .ToListAsync(cancellationToken);
 
+        var customerClientIds = users
+            .Where(u => u.ClientId.HasValue)
+            .Select(u => u.ClientId!.Value)
+            .Distinct()
+            .ToList();
+
+        var clientNamesById = customerClientIds.Count == 0
+            ? new Dictionary<Guid, string>()
+            : await _dbContext.Clients
+                .AsNoTracking()
+                .Where(c => c.OrganizationId == organizationId && customerClientIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, c => c.Name, cancellationToken);
+
         var result = new List<OrgUserListItemDto>();
 
         foreach (var user in users)
         {
             var roles = await _userManager.GetRolesAsync(user);
+            var role = roles.FirstOrDefault() ?? string.Empty;
+
+            var displayName = role == "Customer" && user.ClientId.HasValue
+                ? clientNamesById.TryGetValue(user.ClientId.Value, out var clientName)
+                    ? clientName
+                    : (!string.IsNullOrWhiteSpace(user.FullName) ? user.FullName : user.Email ?? string.Empty)
+                : user.FullName;
 
             result.Add(new OrgUserListItemDto
             {
                 Id = user.Id,
                 Email = user.Email ?? string.Empty,
-                FullName = user.FullName,
-                Role = roles.FirstOrDefault() ?? string.Empty
+                FullName = displayName,
+                Role = role
             });
         }
 

@@ -13,4 +13,8 @@ public interface IDiscountService
     Task CreateAsync(
         DiscountCreateDto dto,
         CancellationToken cancellationToken = default);
+
+    Task VoidAsync(
+        Guid discountId, 
+        CancellationToken cancellationToken = default);
 }

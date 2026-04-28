@@ -44,8 +44,7 @@ public sealed class ProjectFinancialService : IProjectFinancialService
             .AsNoTracking()
             .Where(x =>
                 x.ProjectId == projectId &&
-                x.OrganizationId == organizationId &&
-                !x.IsVoided);
+                x.OrganizationId == organizationId);
 
         var totalInvoiced = await allLedgerEntriesQuery
             .Where(x => x.Type == LedgerEntryType.Invoice)

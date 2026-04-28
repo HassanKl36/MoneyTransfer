@@ -2,35 +2,66 @@
 
 @{
     ViewData["Title"] = "Organization Users";
+    ViewData["BackUrl"] = Url.Action("Index", "Home", new { area = "Org" });
+    ViewData["BackText"] = "Back to Org Portal";
+
+    static string RoleBadgeClass(string? role) => role switch
+    {
+        "Admin" => "bg-primary text-white",
+        "Staff" => "bg-success text-white",
+        "Customer" => "bg-warning text-dark",
+        _ => "bg-secondary text-white"
+    };
 }
 
-<h1>Organization Users</h1>
+<div class="page-header">
+    <h1>Organization Users</h1>
+    <p>Manage internal portal users for this organization.</p>
+</div>
 
-<p>
-    <a asp-area="Org"
-       asp-controller="OrgUsers"
-       asp-action="Create"
-       class="btn btn-primary">
-        Create User
-    </a>
-</p>
+<div class="section-card">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h4 class="mb-0">User Accounts</h4>
+        <a asp-area="Org"
+           asp-controller="OrgUsers"
+           asp-action="Create"
+           class="btn btn-primary">
+            Create User
+        </a>
+    </div>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Email</th>
-            <th>Full Name</th>
-            <th>Role</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var user in Model)
-        {
-            <tr>
-                <td>@user.Email</td>
-                <td>@user.FullName</td>
-                <td>@user.Role</td>
-            </tr>
-        }
-    </tbody>
-</table>
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            No organization users were found.
+        </div>
+    }
+    else
+    {
+        <div class="table-container">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Full Name</th>
+                        <th>Role</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td>@user.Email</td>
+                            <td>@user.FullName</td>
+                            <td>
+                                <span class="badge @RoleBadgeClass(user.Role)">
+                                    @user.Role
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

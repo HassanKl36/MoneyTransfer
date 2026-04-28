@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MoneyTransfer.Application.Services.Clients;
 using MoneyTransfer.Domain.Enums;
+using MoneyTransfer.Web.Areas.Org.Models.Clients;
 
 namespace MoneyTransfer.Web.Areas.Org.Controllers;
 
@@ -41,7 +42,13 @@ public class ClientsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Details(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Details(
+        Guid id,
+        DateTime? fromDate,
+        DateTime? toDate,
+        Guid? projectId,
+        LedgerEntryType? transactionType,
+        CancellationToken cancellationToken)
     {
         var client = await _clientService.GetDetailsAsync(id, cancellationToken);
 
@@ -50,7 +57,26 @@ public class ClientsController : Controller
             return NotFound();
         }
 
-        return View(client);
+        var statement = await _clientService.GetClientStatementForOrgAsync(
+            id,
+            fromDate,
+            toDate,
+            projectId,
+            transactionType,
+            cancellationToken);
+
+        if (statement is null)
+        {
+            return NotFound();
+        }
+
+        var viewModel = new ClientDetailsViewModel
+        {
+            Client = client,
+            Statement = statement
+        };
+
+        return View(viewModel);
     }
 
     [HttpGet]
@@ -76,7 +102,7 @@ public class ClientsController : Controller
         }
 
         var bytes = _pdfRenderer.Render(statement);
-        var fileName = $"Statement_{statement.ClientName}_{fromDate:yyyyMMdd}_{toDate:yyyyMMdd}.pdf";
+        var fileName = BuildStatementFileName(statement, "pdf");
 
         return File(bytes, "application/pdf", fileName);
     }
@@ -104,7 +130,7 @@ public class ClientsController : Controller
         }
 
         var bytes = _excelRenderer.Render(statement);
-        var fileName = $"Statement_{statement.ClientName}_{fromDate:yyyyMMdd}_{toDate:yyyyMMdd}.xlsx";
+        var fileName = BuildStatementFileName(statement, "xlsx");
 
         return File(
             bytes,
@@ -200,5 +226,17 @@ public class ClientsController : Controller
         }
 
         return RedirectToAction(nameof(Index));
+    }
+
+    private static string BuildStatementFileName(ClientStatementDto statement, string extension)
+    {
+        var safeClientName = string.Join("_",
+            statement.ClientName
+                .Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+        var fromPart = statement.FromDate?.ToString("yyyyMMdd") ?? "all";
+        var toPart = statement.ToDate?.ToString("yyyyMMdd") ?? statement.AsOfDate.ToString("yyyyMMdd");
+
+        return $"Statement_{safeClientName}_{fromPart}_{toPart}.{extension}";
     }
 }
