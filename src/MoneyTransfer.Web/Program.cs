@@ -26,6 +26,7 @@ using MoneyTransfer.Infrastructure.Services.ApiKeys;
 using MoneyTransfer.Web.Infrastructure;
 using MoneyTransfer.Web.Services;
 using MoneyTransfer.Application.Common.Models;
+using MoneyTransfer.Web.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -91,6 +92,7 @@ builder.Services.AddScoped<IOrgUserService, OrgUserService>();
 builder.Services.AddScoped<IStatementPdfRenderer, StatementPdfRenderer>();
 builder.Services.AddScoped<IStatementExcelRenderer, StatementExcelRenderer>();
 builder.Services.AddScoped<IAdjustmentService, AdjustmentService>();
+builder.Services.AddSwaggerDocumentation();
 
 var app = builder.Build();
 
@@ -106,6 +108,11 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwaggerDocumentation();
 }
 
 app.UseHttpsRedirection();
