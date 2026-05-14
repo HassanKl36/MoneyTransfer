@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using MoneyTransfer.Application.Services.Authentication;
 using MoneyTransfer.Infrastructure.Identity;
 using MoneyTransfer.Web.Models.Account;
 
@@ -10,16 +9,13 @@ namespace MoneyTransfer.Web.Controllers;
 
 public class AccountController : Controller
 {
-    private readonly IAuthenticationService _authenticationService;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public AccountController(
-        IAuthenticationService authenticationService,
         SignInManager<ApplicationUser> signInManager,
         UserManager<ApplicationUser> userManager)
     {
-        _authenticationService = authenticationService;
         _signInManager = signInManager;
         _userManager = userManager;
     }
@@ -28,48 +24,15 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult Register()
     {
-        return View(new RegisterViewModel());
+        return RedirectToAction(nameof(Login));
     }
 
     [AllowAnonymous]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(RegisterViewModel model)
+    public IActionResult Register(RegisterViewModel model)
     {
-        if (!ModelState.IsValid)
-        {
-            return View(model);
-        }
-
-        var result = await _authenticationService.RegisterOrganizationAsync(new RegisterOrganizationRequest
-        {
-            OrganizationName = model.OrganizationName,
-            OrganizationCode = model.OrganizationCode,
-            FullName = model.FullName,
-            Email = model.Email,
-            Password = model.Password
-        });
-
-        if (!result.Succeeded)
-        {
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error);
-            }
-
-            return View(model);
-        }
-
-        var user = await _userManager.FindByIdAsync(result.UserId!);
-        if (user is null)
-        {
-            ModelState.AddModelError(string.Empty, "Registration succeeded but the user could not be loaded.");
-            return View(model);
-        }
-
-        await SignInWithTenantClaimsAsync(user);
-
-        return RedirectToAction("Index", "Home", new { area = "Org" });
+        return RedirectToAction(nameof(Login));
     }
 
     [AllowAnonymous]
