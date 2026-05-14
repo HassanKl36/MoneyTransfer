@@ -105,25 +105,34 @@ public sealed class ProjectService : IProjectService
             throw new InvalidOperationException("Invalid client selection.");
         }
 
-        var code = await _financialIdentityGenerator.GenerateProjectCodeAsync(
-            organizationId,
-            cancellationToken);
+        var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-        var project = new Domain.Entities.Project
+        await strategy.ExecuteAsync(async () =>
         {
-            Id = Guid.NewGuid(),
-            OrganizationId = organizationId,
-            ClientId = model.ClientId,
-            Name = model.Name.Trim(),
-            Code = code,
-            Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim(),
-            Status = ProjectStatus.Active,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = GetRequiredUserId()
-        };
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        _dbContext.Projects.Add(project);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+            var code = await _financialIdentityGenerator.GenerateProjectCodeAsync(
+                organizationId,
+                cancellationToken);
+
+            var project = new Domain.Entities.Project
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = organizationId,
+                ClientId = model.ClientId,
+                Name = model.Name.Trim(),
+                Code = code,
+                Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim(),
+                Status = ProjectStatus.Active,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = GetRequiredUserId()
+            };
+
+            _dbContext.Projects.Add(project);
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        });
     }
 
     public async Task<bool> UpdateAsync(

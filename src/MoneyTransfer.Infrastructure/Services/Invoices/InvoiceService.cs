@@ -139,60 +139,68 @@ public sealed class InvoiceService : IInvoiceService
             throw new InvalidOperationException("Archived clients cannot receive invoices.");
         }
 
-        var project = data.Project;
+        var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-        var invoiceNumber = await _financialIdentityGenerator.GenerateInvoiceNumberAsync(
-            organizationId,
-            cancellationToken);
-
-        var now = DateTime.UtcNow;
-        var userId = GetRequiredUserId();
-        var description = string.IsNullOrWhiteSpace(dto.Description)
-            ? null
-            : dto.Description.Trim();
-
-        var invoice = new Invoice
+        return await strategy.ExecuteAsync(async () =>
         {
-            Id = Guid.NewGuid(),
-            ProjectId = project.Id,
-            OrganizationId = organizationId,
-            InvoiceNumber = invoiceNumber,
-            Amount = dto.Amount,
-            Date = dto.Date,
-            Description = description,
-            CreatedAt = now,
-            CreatedBy = userId
-        };
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        var ledgerEntry = new LedgerEntry
-        {
-            Id = Guid.NewGuid(),
-            OrganizationId = organizationId,
-            ClientId = project.ClientId,
-            ProjectId = project.Id,
-            Type = LedgerEntryType.Invoice,
-            Amount = dto.Amount,
-            OccurredAt = dto.Date,
-            Notes = description,
-            InvoiceNumber = invoiceNumber,
-            PaymentReference = null,
-            DiscountReference = null,
-            IsVoided = false,
-            VoidedAt = null,
-            CreatedAt = now,
-            CreatedBy = userId
-        };
+            var project = data.Project;
 
-        _dbContext.Invoices.Add(invoice);
-        _dbContext.LedgerEntries.Add(ledgerEntry);
+            var invoiceNumber = await _financialIdentityGenerator.GenerateInvoiceNumberAsync(
+                organizationId,
+                cancellationToken);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+            var now = DateTime.UtcNow;
+            var userId = GetRequiredUserId();
+            var description = string.IsNullOrWhiteSpace(dto.Description)
+                ? null
+                : dto.Description.Trim();
 
-        return new InvoiceCreateResultDto
-        {
-            Id = invoice.Id,
-            InvoiceNumber = invoice.InvoiceNumber
-        };
+            var invoice = new Invoice
+            {
+                Id = Guid.NewGuid(),
+                ProjectId = project.Id,
+                OrganizationId = organizationId,
+                InvoiceNumber = invoiceNumber,
+                Amount = dto.Amount,
+                Date = dto.Date,
+                Description = description,
+                CreatedAt = now,
+                CreatedBy = userId
+            };
+
+            var ledgerEntry = new LedgerEntry
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = organizationId,
+                ClientId = project.ClientId,
+                ProjectId = project.Id,
+                Type = LedgerEntryType.Invoice,
+                Amount = dto.Amount,
+                OccurredAt = dto.Date,
+                Notes = description,
+                InvoiceNumber = invoiceNumber,
+                PaymentReference = null,
+                DiscountReference = null,
+                IsVoided = false,
+                VoidedAt = null,
+                CreatedAt = now,
+                CreatedBy = userId
+            };
+
+            _dbContext.Invoices.Add(invoice);
+            _dbContext.LedgerEntries.Add(ledgerEntry);
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return new InvoiceCreateResultDto
+            {
+                Id = invoice.Id,
+                InvoiceNumber = invoice.InvoiceNumber
+            };
+        });
     }
 
     public async Task VoidAsync(Guid invoiceId, CancellationToken cancellationToken = default)
