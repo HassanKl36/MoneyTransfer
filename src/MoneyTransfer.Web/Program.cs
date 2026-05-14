@@ -1,32 +1,32 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MoneyTransfer.Application.Common.Interfaces;
+using MoneyTransfer.Application.Common.Models;
+using MoneyTransfer.Application.Services.Adjustments;
+using MoneyTransfer.Application.Services.ApiKeys;
 using MoneyTransfer.Application.Services.Authentication;
 using MoneyTransfer.Application.Services.Clients;
+using MoneyTransfer.Application.Services.Discounts;
 using MoneyTransfer.Application.Services.Invoices;
 using MoneyTransfer.Application.Services.OrgUsers;
 using MoneyTransfer.Application.Services.Payments;
 using MoneyTransfer.Application.Services.Projects;
-using MoneyTransfer.Application.Services.Discounts;
-using MoneyTransfer.Application.Services.Adjustments;
-using MoneyTransfer.Application.Services.ApiKeys;
 using MoneyTransfer.Infrastructure.Data;
 using MoneyTransfer.Infrastructure.Identity;
+using MoneyTransfer.Infrastructure.Services.Adjustments;
+using MoneyTransfer.Infrastructure.Services.ApiKeys;
 using MoneyTransfer.Infrastructure.Services.Authentication;
 using MoneyTransfer.Infrastructure.Services.Clients;
+using MoneyTransfer.Infrastructure.Services.Discounts;
+using MoneyTransfer.Infrastructure.Services.Exports;
 using MoneyTransfer.Infrastructure.Services.FinancialIdentity;
 using MoneyTransfer.Infrastructure.Services.Invoices;
 using MoneyTransfer.Infrastructure.Services.OrgUsers;
 using MoneyTransfer.Infrastructure.Services.Payments;
 using MoneyTransfer.Infrastructure.Services.Projects;
-using MoneyTransfer.Infrastructure.Services.Discounts;
-using MoneyTransfer.Infrastructure.Services.Adjustments;
-using MoneyTransfer.Infrastructure.Services.Exports;
-using MoneyTransfer.Infrastructure.Services.ApiKeys;
+using MoneyTransfer.Web.Extensions;
 using MoneyTransfer.Web.Infrastructure;
 using MoneyTransfer.Web.Services;
-using MoneyTransfer.Application.Common.Models;
-using MoneyTransfer.Web.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,7 +48,6 @@ builder.Services
     .AddEntityFrameworkStores<MoneyTransferDbContext>()
     .AddDefaultTokenProviders();
 
-// Configure auth cookie paths (so unauthenticated users go to /Account/Login)
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -65,7 +64,6 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("Customer"));
 });
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddHttpContextAccessor();
@@ -92,18 +90,13 @@ builder.Services.AddScoped<IOrgUserService, OrgUserService>();
 builder.Services.AddScoped<IStatementPdfRenderer, StatementPdfRenderer>();
 builder.Services.AddScoped<IStatementExcelRenderer, StatementExcelRenderer>();
 builder.Services.AddScoped<IAdjustmentService, AdjustmentService>();
+
 builder.Services.AddSwaggerDocumentation();
 
 var app = builder.Build();
 
-// Ensure required roles exist
-using (var scope = app.Services.CreateScope())
-{
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    await RoleSeeder.SeedAsync(roleManager);
-}
+await ApplicationDbInitializer.InitializeAsync(app.Services);
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
