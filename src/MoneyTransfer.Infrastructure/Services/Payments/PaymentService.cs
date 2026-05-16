@@ -139,59 +139,67 @@ public sealed class PaymentService : IPaymentService
             throw new InvalidOperationException("Archived clients cannot receive payments.");
         }
 
-        var project = data.Project;
+        var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-        var paymentReference = await _financialIdentityGenerator.GeneratePaymentReferenceAsync(
-            organizationId,
-            cancellationToken);
-
-        var now = DateTime.UtcNow;
-        var userId = GetRequiredUserId();
-        var paymentMethod = NormalizeOptionalText(dto.PaymentMethod);
-        var description = NormalizeOptionalText(dto.Description);
-
-        var payment = new Payment
+        return await strategy.ExecuteAsync(async () =>
         {
-            Id = Guid.NewGuid(),
-            ProjectId = project.Id,
-            OrganizationId = organizationId,
-            PaymentReference = paymentReference,
-            Amount = dto.Amount,
-            Date = dto.Date,
-            PaymentMethod = paymentMethod,
-            Description = description,
-            CreatedAt = now,
-            CreatedBy = userId
-        };
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        var ledgerEntry = new LedgerEntry
-        {
-            Id = Guid.NewGuid(),
-            OrganizationId = organizationId,
-            ClientId = project.ClientId,
-            ProjectId = project.Id,
-            Type = LedgerEntryType.Payment,
-            Amount = -dto.Amount,
-            OccurredAt = dto.Date,
-            Notes = BuildLedgerNotes(paymentMethod, description),
-            InvoiceNumber = null,
-            PaymentReference = paymentReference,
-            IsVoided = false,
-            VoidedAt = null,
-            CreatedAt = now,
-            CreatedBy = userId
-        };
+            var project = data.Project;
 
-        _dbContext.Set<Payment>().Add(payment);
-        _dbContext.LedgerEntries.Add(ledgerEntry);
+            var paymentReference = await _financialIdentityGenerator.GeneratePaymentReferenceAsync(
+                organizationId,
+                cancellationToken);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+            var now = DateTime.UtcNow;
+            var userId = GetRequiredUserId();
+            var paymentMethod = NormalizeOptionalText(dto.PaymentMethod);
+            var description = NormalizeOptionalText(dto.Description);
 
-        return new PaymentCreateResultDto
-        {
-            Id = payment.Id,
-            PaymentReference = payment.PaymentReference
-        };
+            var payment = new Payment
+            {
+                Id = Guid.NewGuid(),
+                ProjectId = project.Id,
+                OrganizationId = organizationId,
+                PaymentReference = paymentReference,
+                Amount = dto.Amount,
+                Date = dto.Date,
+                PaymentMethod = paymentMethod,
+                Description = description,
+                CreatedAt = now,
+                CreatedBy = userId
+            };
+
+            var ledgerEntry = new LedgerEntry
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = organizationId,
+                ClientId = project.ClientId,
+                ProjectId = project.Id,
+                Type = LedgerEntryType.Payment,
+                Amount = -dto.Amount,
+                OccurredAt = dto.Date,
+                Notes = BuildLedgerNotes(paymentMethod, description),
+                InvoiceNumber = null,
+                PaymentReference = paymentReference,
+                IsVoided = false,
+                VoidedAt = null,
+                CreatedAt = now,
+                CreatedBy = userId
+            };
+
+            _dbContext.Set<Payment>().Add(payment);
+            _dbContext.LedgerEntries.Add(ledgerEntry);
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return new PaymentCreateResultDto
+            {
+                Id = payment.Id,
+                PaymentReference = payment.PaymentReference
+            };
+        });
     }
 
     public async Task<ClientPaymentCreateDto> InitializeClientAllocationCreateAsync(

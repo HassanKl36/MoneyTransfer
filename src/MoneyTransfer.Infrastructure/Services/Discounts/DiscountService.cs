@@ -153,48 +153,56 @@ public sealed class DiscountService : IDiscountService
             throw new InvalidOperationException("Discount would result in negative project balance.");
         }
 
-        var reference = await _identityGenerator.GenerateDiscountReferenceAsync(orgId, cancellationToken);
+        var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-        var now = DateTime.UtcNow;
-        var userId = GetRequiredUserId();
-        var reason = dto.Reason.Trim();
-
-        var discount = new Discount
+        await strategy.ExecuteAsync(async () =>
         {
-            Id = Guid.NewGuid(),
-            ProjectId = project.Id,
-            OrganizationId = orgId,
-            DiscountReference = reference,
-            Amount = dto.Amount,
-            Date = dto.Date,
-            Reason = reason,
-            CreatedAt = now,
-            CreatedBy = userId
-        };
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        var ledger = new LedgerEntry
-        {
-            Id = Guid.NewGuid(),
-            OrganizationId = orgId,
-            ClientId = project.ClientId,
-            ProjectId = project.Id,
-            Type = LedgerEntryType.Discount,
-            Amount = -dto.Amount,
-            OccurredAt = dto.Date,
-            Notes = reason,
-            InvoiceNumber = null,
-            PaymentReference = null,
-            DiscountReference = reference,
-            IsVoided = false,
-            VoidedAt = null,
-            CreatedAt = now,
-            CreatedBy = userId
-        };
+            var reference = await _identityGenerator.GenerateDiscountReferenceAsync(orgId, cancellationToken);
 
-        _dbContext.Discounts.Add(discount);
-        _dbContext.LedgerEntries.Add(ledger);
+            var now = DateTime.UtcNow;
+            var userId = GetRequiredUserId();
+            var reason = dto.Reason.Trim();
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+            var discount = new Discount
+            {
+                Id = Guid.NewGuid(),
+                ProjectId = project.Id,
+                OrganizationId = orgId,
+                DiscountReference = reference,
+                Amount = dto.Amount,
+                Date = dto.Date,
+                Reason = reason,
+                CreatedAt = now,
+                CreatedBy = userId
+            };
+
+            var ledger = new LedgerEntry
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = orgId,
+                ClientId = project.ClientId,
+                ProjectId = project.Id,
+                Type = LedgerEntryType.Discount,
+                Amount = -dto.Amount,
+                OccurredAt = dto.Date,
+                Notes = reason,
+                InvoiceNumber = null,
+                PaymentReference = null,
+                DiscountReference = reference,
+                IsVoided = false,
+                VoidedAt = null,
+                CreatedAt = now,
+                CreatedBy = userId
+            };
+
+            _dbContext.Discounts.Add(discount);
+            _dbContext.LedgerEntries.Add(ledger);
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        });
     }
 
     public async Task VoidAsync(Guid discountId, CancellationToken cancellationToken = default)
